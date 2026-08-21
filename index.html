@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>餐飲店經營評估試算工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink-navy:#1B2A44;
+  --blueprint-wash:#E9EFF5;
+  --ledger-cream:#FAF3E4;
+  --ink-black:#201D18;
+  --deficit-red:#B3372A;
+  --surplus-green:#2F6B4F;
+  --brass-accent:#A9812F;
+  --paper:#F5F6F3;
+  --line:#C9D2DD;
+  --font-display:'Big Shoulders Display',sans-serif;
+  --font-heading:'Noto Sans TC',sans-serif;
+  --font-body:'Noto Sans TC',sans-serif;
+  --font-mono:'JetBrains Mono','Noto Sans TC',monospace;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink-black);
+  font-family:var(--font-body);
+  line-height:1.6;
+  overflow-x:hidden;
+}
+img,svg{max-width:100%;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px;}
+
+/* ---------- Header / Hero ---------- */
+.hero{background:var(--ink-navy);color:#EEF3F8;padding:56px 0 64px;}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.78rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#9FB4CE;
+  margin:0 0 14px;
+}
+.hero h1{
+  font-family:var(--font-heading);
+  font-weight:900;
+  font-size:clamp(1.9rem,4.4vw,3.1rem);
+  line-height:1.28;
+  margin:0 0 14px;
+  letter-spacing:.01em;
+}
+.hero h1 .accent{color:var(--brass-accent);}
+.hero .sub{
+  font-size:clamp(1rem,1.6vw,1.15rem);
+  color:#C7D4E2;
+  max-width:46em;
+  margin:0 0 40px;
+}
+.hero-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+  gap:24px;
+}
+@media (max-width:820px){.hero-grid{grid-template-columns:1fr;}}
+
+.card{
+  background:#fff;
+  border-radius:4px;
+  border:1px solid var(--line);
+}
+
+/* ---------- Floor plan ---------- */
+.floorplan-card{background:var(--blueprint-wash);color:var(--ink-navy);border-radius:6px;padding:22px;border:1px solid rgba(27,42,68,.15);}
+.floorplan-card h2{
+  font-family:var(--font-heading);font-weight:700;font-size:1.02rem;margin:0 0 4px;
+}
+.floorplan-card .fp-caption{font-size:.85rem;color:#3E5170;margin:0 0 16px;}
+.fp-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(16px,1fr));
+  gap:3px;
+  margin-bottom:16px;
+  background:rgba(27,42,68,.08);
+  padding:8px;
+  border-radius:4px;
+}
+.fp-cell{
+  aspect-ratio:1/1;
+  border-radius:2px;
+  opacity:0;
+  transform:scale(.4);
+}
+.fp-cell.animate{animation:fp-in .32s ease forwards;}
+@keyframes fp-in{to{opacity:1;transform:scale(1);}}
+.fp-cell.noanim{opacity:1;transform:none;}
+.fp-cell.zone-kitchen{background:var(--ink-navy);}
+.fp-cell.zone-circ{background:#7C93B3;}
+.fp-cell.zone-dining{background:#fff;border:1px solid #B9C7DA;background-image:radial-gradient(circle,#B9C7DA 1px,transparent 1.3px);background-size:60% 60%;background-position:center;}
+.fp-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;margin-bottom:14px;}
+.fp-legend span{display:inline-flex;align-items:center;gap:6px;}
+.fp-legend i{width:11px;height:11px;border-radius:2px;display:inline-block;}
+.fp-legend .lg-kitchen{background:var(--ink-navy);}
+.fp-legend .lg-circ{background:#7C93B3;}
+.fp-legend .lg-dining{background:#fff;border:1px solid #B9C7DA;}
+.fp-seats{
+  font-family:var(--font-mono);font-weight:600;font-size:1rem;
+  background:#fff;border-radius:4px;padding:10px 14px;color:var(--ink-navy);
+}
+.fp-seats b{font-family:var(--font-display);font-weight:800;font-size:1.5rem;color:var(--brass-accent);}
+
+/* ---------- Ping efficiency headline card ---------- */
+.pe-card{
+  background:#fff;border-radius:6px;padding:22px;border:1px solid rgba(27,42,68,.15);
+  display:flex;flex-direction:column;justify-content:center;color:var(--ink-navy);
+}
+.pe-card h2{font-family:var(--font-heading);font-weight:700;font-size:1.02rem;margin:0 0 4px;}
+.pe-card .pe-caption{font-size:.85rem;color:#3E5170;margin:0 0 12px;}
+.pe-value{
+  font-family:var(--font-display);font-weight:800;color:var(--brass-accent);
+  font-size:clamp(2.2rem,4vw,3.1rem);line-height:1;letter-spacing:.01em;
+}
+.pe-unit{font-family:var(--font-mono);font-size:.95rem;color:#4A5D7C;margin-left:6px;}
+.pe-bar-track{position:relative;height:10px;border-radius:6px;background:#E4E9F0;margin:18px 0 8px;}
+.pe-bar-band{position:absolute;top:0;bottom:0;background:rgba(47,107,79,.28);border-radius:6px;}
+.pe-bar-marker{position:absolute;top:-4px;width:3px;height:18px;background:var(--ink-navy);border-radius:2px;transition:left .3s ease;}
+.pe-bar-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.72rem;color:#5B6E8C;}
+.pe-note{font-size:.82rem;color:#3E5170;margin-top:14px;}
+
+/* ---------- Sections ---------- */
+section{padding:52px 0;}
+section.alt{background:#fff;}
+.section-head{margin-bottom:28px;}
+.section-head .kicker{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--deficit-red);margin:0 0 6px;}
+.section-head h2{font-family:var(--font-heading);font-weight:900;font-size:1.6rem;margin:0 0 8px;color:var(--ink-navy);}
+.section-head p{margin:0;color:#4C4A44;max-width:52em;font-size:.95rem;}
+
+/* ---------- Variable groups ---------- */
+.group-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+.group-tab{
+  font-family:var(--font-heading);font-weight:700;font-size:.86rem;
+  border:1px solid var(--line);background:#fff;color:var(--ink-navy);
+  padding:8px 16px;border-radius:999px;cursor:pointer;
+}
+.group-tab[aria-selected="true"]{background:var(--ink-navy);color:#fff;border-color:var(--ink-navy);}
+.group-panel{display:none;}
+.group-panel.active{display:block;}
+.group-panel .group-desc{font-size:.9rem;color:#4C4A44;margin:0 0 20px;max-width:52em;}
+.subgroup-title{
+  font-family:var(--font-heading);font-weight:700;font-size:.88rem;color:var(--ink-navy);
+  margin:22px 0 10px;padding-top:14px;border-top:1px dashed var(--line);
+}
+.subgroup-title:first-child{border-top:none;padding-top:0;margin-top:0;}
+.var-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.var-card{border:1px solid var(--line);border-radius:6px;padding:16px 18px;background:#fff;}
+.var-card .var-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px;}
+.var-card label{font-family:var(--font-heading);font-weight:700;font-size:.92rem;color:var(--ink-navy);}
+.var-card .var-value{font-family:var(--font-mono);font-weight:600;font-size:.92rem;color:var(--deficit-red);white-space:nowrap;background:#FBEDEA;padding:1px 8px;border-radius:4px;}
+.var-card input[type=range]{width:100%;accent-color:var(--ink-navy);margin:8px 0 4px;}
+.var-card .var-minmax{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.7rem;color:#8A93A0;margin-bottom:8px;}
+.var-card .var-desc{font-size:.82rem;color:#5A5850;margin:0;}
+
+/* ---------- Ticket ---------- */
+.ticket-wrap{display:flex;justify-content:center;}
+.ticket{
+  position:relative;background:var(--ledger-cream);color:var(--ink-black);
+  font-family:var(--font-mono);width:min(480px,100%);padding:34px 26px;
+  box-shadow:0 12px 28px rgba(27,20,10,.14);
+}
+.ticket::before,.ticket::after{
+  content:"";position:absolute;left:0;right:0;height:10px;
+  background-image:linear-gradient(135deg,var(--paper) 50%,transparent 50%),linear-gradient(45deg,var(--paper) 50%,transparent 50%);
+  background-size:14px 14px;background-repeat:repeat-x;
+}
+.ticket::before{top:-1px;background-position:0 0;}
+.ticket::after{bottom:-1px;transform:rotate(180deg);}
+.ticket h3{font-family:var(--font-heading);font-weight:900;text-align:center;font-size:1.05rem;letter-spacing:.06em;margin:0 0 4px;color:var(--ink-navy);}
+.ticket .ticket-sub{text-align:center;font-size:.72rem;color:#7A6E52;margin:0 0 18px;letter-spacing:.04em;}
+.ticket-row{display:flex;justify-content:space-between;gap:10px;font-size:.86rem;padding:6px 0;border-bottom:1px dotted #D8CBAA;}
+.ticket-row .t-label{color:#5A5240;}
+.ticket-row .t-val{font-weight:600;white-space:nowrap;}
+.ticket-row.good .t-val{color:var(--surplus-green);}
+.ticket-row.bad .t-val{color:var(--deficit-red);}
+.ticket-row.flash{animation:tflash .6s ease;}
+@keyframes tflash{0%{background:rgba(169,129,47,.35);}100%{background:transparent;}}
+.ticket-row.total{border-bottom:none;border-top:2px solid var(--ink-navy);margin-top:8px;padding-top:12px;}
+.ticket-row.total .t-label{font-family:var(--font-heading);font-weight:900;color:var(--ink-navy);font-size:.95rem;}
+.ticket-row.total .t-val{font-family:var(--font-display);font-weight:800;font-size:1.35rem;}
+.ticket-note{font-size:.72rem;color:#8A7E60;margin-top:14px;line-height:1.5;}
+
+/* ---------- AI ---------- */
+.ai-card{background:var(--ink-navy);color:#EDF2F8;border-radius:8px;padding:28px;}
+.ai-card h2{font-family:var(--font-heading);font-weight:900;font-size:1.3rem;margin:0 0 8px;}
+.ai-card p.lead{color:#C7D4E2;font-size:.9rem;margin:0 0 18px;max-width:50em;}
+.ai-settings{background:rgba(255,255,255,.06);border-radius:6px;padding:0;margin-bottom:18px;}
+.ai-settings summary{cursor:pointer;padding:14px 16px;font-family:var(--font-heading);font-weight:700;font-size:.88rem;list-style:none;}
+.ai-settings summary::-webkit-details-marker{display:none;}
+.ai-settings summary::before{content:"▸ ";color:var(--brass-accent);}
+.ai-settings[open] summary::before{content:"▾ ";}
+.ai-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:0 16px 16px;}
+.ai-fields label{display:block;font-size:.76rem;color:#AEC0D6;margin-bottom:4px;}
+.ai-fields input,.ai-fields select{
+  width:100%;padding:9px 10px;border-radius:4px;border:1px solid #3A4E6E;background:#0F1B30;color:#EDF2F8;font-family:var(--font-body);font-size:.86rem;
+}
+.ai-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.btn-primary{
+  font-family:var(--font-heading);font-weight:700;font-size:.9rem;
+  background:var(--brass-accent);color:#231A05;border:none;border-radius:999px;
+  padding:12px 26px;cursor:pointer;
+}
+.btn-primary:disabled{opacity:.55;cursor:progress;}
+.btn-secondary{
+  font-family:var(--font-heading);font-weight:700;font-size:.86rem;
+  background:transparent;color:#EDF2F8;border:1px solid #3A4E6E;border-radius:999px;
+  padding:11px 20px;cursor:pointer;
+}
+.ai-status{font-size:.82rem;padding:4px 0;}
+.ai-status.status-ok{color:#8FE0B3;}
+.ai-status.status-err{color:#F0A597;}
+.ai-status.status-info{color:#AEC0D6;}
+.ai-result{
+  margin-top:18px;background:#fff;color:var(--ink-black);border-radius:6px;padding:20px 22px;
+  font-size:.92rem;line-height:1.75;white-space:pre-wrap;display:none;
+}
+.ai-result.show{display:block;}
+.ai-result .ai-badge{
+  display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;
+  padding:2px 9px;border-radius:999px;margin-bottom:10px;
+}
+.ai-badge.mode-ai{background:#E3F3EA;color:var(--surplus-green);}
+.ai-badge.mode-rule{background:#EEE;color:#5A5850;}
+
+/* ---------- Notes ---------- */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+.note-card{border:1px solid var(--line);border-radius:6px;padding:18px;background:#fff;}
+.note-card h3{font-family:var(--font-heading);font-weight:700;font-size:.95rem;margin:0 0 8px;color:var(--ink-navy);}
+.note-card p{font-size:.85rem;color:#4C4A44;margin:0;}
+.note-card .note-fig{font-family:var(--font-mono);font-weight:600;color:var(--deficit-red);}
+
+/* ---------- Footer ---------- */
+footer{background:var(--ink-navy);color:#AEC0D6;padding:32px 0;font-size:.78rem;}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;}
+footer .reset-btn{
+  background:transparent;color:#EDF2F8;border:1px solid #3A4E6E;border-radius:999px;
+  padding:8px 16px;cursor:pointer;font-family:var(--font-body);font-size:.78rem;
+}
+
+/* ---------- Accessibility / motion ---------- */
+:focus-visible{outline:3px solid var(--brass-accent);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){
+  .fp-cell.animate{animation:none;opacity:1;transform:none;}
+  .pe-bar-marker{transition:none;}
+  .ticket-row.flash{animation:none;}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">台北 / 新北一線商圈・中高固定成本結構試算</p>
+    <h1>55 坪，月租 38.5 萬。<br>這盤生意，<span class="accent">能成嗎？</span></h1>
+    <p class="sub">用坪效與翻桌率回答，不是用感覺。調整下面的變數，看看空間配置怎麼變成營收，營收怎麼被成本吃掉，最後剩下多少淨利。</p>
+    <div class="hero-grid">
+      <div class="floorplan-card">
+        <h2>55 坪平面配置</h2>
+        <p class="fp-caption">每一格代表 1 坪。拖動下方「空間與坪效」的滑桿，看廚房、動線與內用怎麼分這塊地。</p>
+        <div class="fp-grid" id="fpGrid" aria-hidden="true"></div>
+        <div class="fp-legend">
+          <span><i class="lg-kitchen"></i>廚房 <b id="lgKitchenPct">30%</b></span>
+          <span><i class="lg-circ"></i>動線／廁所 <b id="lgCircPct">15%</b></span>
+          <span><i class="lg-dining"></i>內用 <b id="lgDiningPct">55%</b></span>
+        </div>
+        <div class="fp-seats">內用座位數 → <b id="seatCountOut">40</b> 席</div>
+      </div>
+      <div class="pe-card">
+        <h2>坪效（每坪月營收）</h2>
+        <p class="pe-caption">全店月營收 ÷ 總坪數。這是判斷 38.5 萬店租撐不撐得起這個空間的核心指標。</p>
+        <div><span class="pe-value" id="peValue">0</span><span class="pe-unit">元 / 坪 / 月</span></div>
+        <div class="pe-bar-track">
+          <div class="pe-bar-band" id="peBand"></div>
+          <div class="pe-bar-marker" id="peMarker"></div>
+        </div>
+        <div class="pe-bar-labels"><span>0</span><span id="peBandLabel">健康區間</span><span id="peMax">120,000</span></div>
+        <p class="pe-note">健康區間＝月租金的 7–8 倍營收目標 ÷ 總坪數，落在區間內代表坪效撐得起這個店租。</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Variables</p>
+      <h2>調整經營假設</h2>
+      <p>五組變數分類（非流程步驟，可任意順序調整）：空間配置決定座位，定價與翻桌率決定營收，成本結構與人事編制決定被吃掉多少，CAPEX／押金決定開店前要準備多少現金。每個變數都有說明，告訴你它在算什麼、建議範圍從哪裡來。</p>
+    </div>
+    <div class="group-tabs" id="groupTabs" role="tablist"></div>
+    <div id="groupPanels"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">P&amp;L</p>
+      <h2>本月損益試算票根</h2>
+      <p>依目前的變數即時重算。綠字＝落在建議健康區間，紅字＝超出建議範圍，需要留意。</p>
+    </div>
+    <div class="ticket-wrap">
+      <div class="ticket">
+        <h3>本月損益試算單</h3>
+        <p class="ticket-sub">RESTAURANT P&amp;L SIMULATION</p>
+        <div id="ticketBody"></div>
+        <p class="ticket-note">＊本試算單所有數字均為依你目前設定推算的估計值，非實際財務報表，僅供開店前評估參考。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="ai-card">
+      <h2>請 AI 診斷這個模型</h2>
+      <p class="lead">把目前的變數與試算結果整理後，請語言模型針對台北／新北一線商圈的餐飲經營語境給診斷與建議。沒有金鑰也能用——會改用規則式健檢，直接標出哪些比例超出建議範圍。</p>
+      <details class="ai-settings" id="aiSettings">
+        <summary>AI 診斷設定（選用，需自備 API 金鑰）</summary>
+        <div class="ai-fields">
+          <div>
+            <label for="aiProvider">服務商</label>
+            <select id="aiProvider"></select>
+          </div>
+          <div>
+            <label for="aiModel">模型 ID</label>
+            <input type="text" id="aiModel" autocomplete="off">
+          </div>
+          <div>
+            <label for="aiKey">API 金鑰</label>
+            <input type="password" id="aiKey" autocomplete="off" placeholder="只存在你的瀏覽器本機">
+          </div>
+        </div>
+      </details>
+      <div class="ai-actions">
+        <button class="btn-primary" id="aiDiagnoseBtn" type="button">請 AI 診斷這個模型</button>
+        <button class="btn-secondary" id="ruleDiagnoseBtn" type="button">改用規則式健檢（不需金鑰）</button>
+        <span class="ai-status" id="aiStatus"></span>
+      </div>
+      <div class="ai-result" id="aiResult">
+        <span class="ai-badge" id="aiBadge"></span>
+        <div id="aiResultText"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Beyond the model</p>
+      <h2>試算單沒告訴你的事</h2>
+      <p>這幾件事不會出現在每月損益裡，但會決定你撐不撐得過開店前幾個月。</p>
+    </div>
+    <div class="notes-grid" id="notesGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>本工具僅供開店前的財務可行性初步評估，所有試算結果皆為估計值，實際經營請諮詢會計師／商圈實際行情。變數設定與 AI 診斷內容皆儲存在你的瀏覽器本機，不會上傳。</div>
+    <button class="reset-btn" id="resetBtn" type="button">重設為預設值</button>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var STATE_KEY = "restaurantCalcState";
+  var API_KEY = "restaurantCalcApiConfig";
+  var firstRender = true;
+
+  /* ---------- Variable definitions ---------- */
+  var VAR_DEFS = [
+    {id:"monthlyRent", group:"space", label:"月租金", unit:"元", min:100000, max:800000, step:5000, def:385000,
+      desc:"每月固定要付的租金。台北／新北一線商圈的中高租金帶通常落在 30–50 萬，是這個模型裡最大的固定成本。"},
+    {id:"totalPing", group:"space", label:"總坪數", unit:"坪", min:20, max:150, step:1, def:55,
+      desc:"承租的總面積，決定平面圖有幾格。坪數越大，固定成本壓力越大，但座位天花板也越高。"},
+    {id:"kitchenPct", group:"space", label:"廚房占比", unit:"%", min:15, max:45, step:1, def:30, pct:true,
+      desc:"廚房（含備料區、冷凍冷藏、油煙處理）吃掉的坪數比例。中式熱炒／火鍋通常偏高，輕食／定食可以壓低。"},
+    {id:"circPct", group:"space", label:"動線／廁所占比", unit:"%", min:5, max:25, step:1, def:15, pct:true,
+      desc:"走道、廁所、出入動線的必要占比。壓太低會讓內用區動線擁擠、翻桌變慢，通常不建議低於 10%。"},
+    {id:"pingPerSeat", group:"space", label:"每客席坪數", unit:"坪/席", min:0.75, max:1.2, step:0.01, def:0.76,
+      desc:"每個座位（含桌間通道）需要的空間，一般抓 0.8–1.2 坪較舒適；壓到 0.75–0.8 坪代表桌距很緊，適合快翻桌的商業客群，但要犧牲舒適度換座位數。"},
+
+    {id:"avgCheck", group:"pricing", label:"平均客單價", unit:"元/人", min:400, max:1200, step:10, def:700,
+      desc:"每位客人平均消費。決定於定位——快商業午餐偏低，主題餐酒／精緻定食可以拉到 650–800。"},
+    {id:"weekdayTurns", group:"pricing", label:"平日翻桌次數", unit:"翻/日", min:1, max:4, step:0.1, def:2.5,
+      desc:"平日一天座位被坐滿又換人的次數。抓 2.5 翻代表午餐、晚餐各滿桌一輪，再加半輪下午時段。"},
+    {id:"weekendTurns", group:"pricing", label:"假日翻桌次數", unit:"翻/日", min:1, max:7, step:0.1, def:4.5,
+      desc:"假日通常是平日的 1.5–2 倍，因為午晚餐都可能滿桌加候位，是撐營收的主力時段。"},
+    {id:"weekdayDays", group:"pricing", label:"平日天數／月", unit:"天", min:15, max:25, step:1, def:22,
+      desc:"每月平日營業天數，用來把日翻桌率換算成月營收。"},
+    {id:"weekendDays", group:"pricing", label:"假日天數／月", unit:"天", min:4, max:14, step:1, def:8,
+      desc:"每月假日（含國定連假加成日）營業天數。"},
+    {id:"takeoutPct", group:"pricing", label:"外帶外送占比", unit:"%", min:0, max:30, step:1, def:10, pct:true,
+      desc:"內用以外，外帶、外送平台與零售商品補足的營收比例。內用坪數有天花板，外帶是額外成長空間。"},
+
+    {id:"cogsPct", group:"cost", label:"食材成本 (COGS)", unit:"%", min:20, max:40, step:0.5, def:31, pct:true, band:[28,34],
+      desc:"食材、醬料與耗損占營收的比例。建議帶 30–32%，超過太多代表菜單訂價或採購成本需要檢討。"},
+    {id:"utilitiesPct", group:"cost", label:"水電瓦斯與雜費", unit:"%", min:2, max:10, step:0.25, def:5.5, pct:true, band:[4,7],
+      desc:"水電瓦斯、POS 系統、清潔與維修等雜費，建議帶 5–6%。"},
+    {id:"marketingPct", group:"cost", label:"行銷與刷卡抽成", unit:"%", min:0, max:8, step:0.25, def:3.5, pct:true, band:[2,5],
+      desc:"外送平台抽成、社群廣告與刷卡手續費，建議帶 3–4%，太低可能代表曝光不足。"},
+
+    {id:"kitchenFT", group:"labor", subgroup:"內場（廚房）", label:"正職人數", unit:"人", min:0, max:12, step:1, def:6,
+      desc:"內場正職員工人數，含主廚／副手／助手。40席、7天營業、午晚雙班通常需要輪班覆蓋，人數比單班估算的直覺多。"},
+    {id:"kitchenFTWage", group:"labor", subgroup:"內場（廚房）", label:"正職平均月薪", unit:"元", min:30000, max:80000, step:1000, def:48000,
+      desc:"內場正職平均月薪，主廚通常拉高整體平均。"},
+    {id:"kitchenPTHours", group:"labor", subgroup:"內場（廚房）", label:"兼職工時／月", unit:"小時", min:0, max:400, step:10, def:180,
+      desc:"內場兼職人力每月總工時，用來支援尖峰時段備料出餐。"},
+    {id:"kitchenPTWage", group:"labor", subgroup:"內場（廚房）", label:"兼職時薪", unit:"元/時", min:180, max:280, step:5, def:230,
+      desc:"內場兼職時薪，基本工資之上依技術門檻調整。"},
+    {id:"floorFT", group:"labor", subgroup:"外場（服務）", label:"正職人數", unit:"人", min:0, max:12, step:1, def:6,
+      desc:"外場正職員工人數，含店長／領班。40席全天候翻桌需要多班輪替，才撐得住假日 4.5 翻的服務強度。"},
+    {id:"floorFTWage", group:"labor", subgroup:"外場（服務）", label:"正職平均月薪", unit:"元", min:30000, max:80000, step:1000, def:45000,
+      desc:"外場正職平均月薪，店長／主管通常拉高整體平均。"},
+    {id:"floorPTHours", group:"labor", subgroup:"外場（服務）", label:"兼職工時／月", unit:"小時", min:0, max:400, step:10, def:260,
+      desc:"外場兼職人力每月總工時，用來支援假日尖峰服務。"},
+    {id:"floorPTWage", group:"labor", subgroup:"外場（服務）", label:"兼職時薪", unit:"元/時", min:180, max:280, step:5, def:230,
+      desc:"外場兼職時薪。"},
+    {id:"laborBurdenPct", group:"labor", subgroup:"加成", label:"勞健保／退休金提撥率", unit:"%", min:5, max:25, step:1, def:15, pct:true,
+      desc:"在薪資總額之外，雇主要額外負擔的勞健保與退休金提撥比例。"},
+
+    {id:"renovationPerPing", group:"capex", label:"每坪裝潢造價", unit:"元/坪", min:60000, max:150000, step:1000, def:100000,
+      desc:"含硬裝、廚房設備、空調與 POS 系統，一線商圈行情約 8–12 萬/坪。"},
+    {id:"depreciationMonths", group:"capex", label:"折舊攤提月數", unit:"月", min:12, max:60, step:1, def:36,
+      desc:"裝潢與設備分攤成本的期間，通常抓 3 年（36 個月）。"},
+    {id:"depositMonths", group:"capex", label:"押金月數", unit:"月租金", min:1, max:4, step:0.5, def:2.5,
+      desc:"簽約時要一次付清的押金，通常是 2–3 個月租金。"},
+    {id:"freeRentDays", group:"capex", label:"免租期", unit:"天", min:0, max:90, step:5, def:45,
+      desc:"裝潢期間爭取到的免租天數。爭取不到，裝潢期間的租金會直接侵蝕開店資本。（僅顯示，不計入每月損益）"}
+  ];
+
+  var GROUPS = [
+    {id:"space", label:"空間與坪效", desc:"總坪數怎麼切、每個客席要多少空間——這組變數決定你有幾張桌子可以賣。"},
+    {id:"pricing", label:"定價與翻桌率", desc:"客單價乘上翻桌次數，是內用營收的核心引擎。"},
+    {id:"cost", label:"成本結構佔比", desc:"食材、水電、行銷占營收的比例，決定每賺 100 元能留下多少。"},
+    {id:"labor", label:"人事編制", desc:"從正職／兼職人數與薪資反推人事總成本，而不是直接猜一個百分比。"},
+    {id:"capex", label:"CAPEX 與押金", desc:"開店前要準備的裝潢資本與押金，以及每月要攤提多少折舊。"}
+  ];
+
+  var state = {};
+  VAR_DEFS.forEach(function(v){ state[v.id] = v.def; });
+
+  function loadState(){
+    try{
+      var saved = JSON.parse(localStorage.getItem(STATE_KEY));
+      if(saved) Object.keys(saved).forEach(function(k){ if(k in state) state[k] = saved[k]; });
+    }catch(e){}
+  }
+  function persistState(){
+    try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function fmtInt(n){ return Math.round(n).toLocaleString("zh-TW"); }
+  function fmtPct(n){ return (Math.round(n*1000)/10).toFixed(1) + "%"; }
+
+  /* ---------- Build variable panel UI ---------- */
+  function buildGroupUI(){
+    var tabsEl = $("groupTabs");
+    var panelsEl = $("groupPanels");
+    tabsEl.innerHTML = "";
+    panelsEl.innerHTML = "";
+    GROUPS.forEach(function(g, gi){
+      var tab = document.createElement("button");
+      tab.className = "group-tab";
+      tab.type = "button";
+      tab.setAttribute("role","tab");
+      tab.setAttribute("aria-selected", gi===0 ? "true":"false");
+      tab.textContent = g.label;
+      tab.addEventListener("click", function(){ selectGroup(g.id); });
+      tabsEl.appendChild(tab);
+
+      var panel = document.createElement("div");
+      panel.className = "group-panel" + (gi===0 ? " active":"");
+      panel.id = "panel-" + g.id;
+      var descEl = document.createElement("p");
+      descEl.className = "group-desc";
+      descEl.textContent = g.desc;
+      panel.appendChild(descEl);
+
+      var vars = VAR_DEFS.filter(function(v){ return v.group === g.id; });
+      var grid = document.createElement("div");
+      grid.className = "var-grid";
+      var lastSub = null;
+      vars.forEach(function(v){
+        if(v.subgroup && v.subgroup !== lastSub){
+          if(lastSub !== null){ panel.appendChild(grid); grid = document.createElement("div"); grid.className = "var-grid"; }
+          var subTitle = document.createElement("div");
+          subTitle.className = "subgroup-title";
+          subTitle.textContent = v.subgroup;
+          panel.appendChild(subTitle);
+          lastSub = v.subgroup;
+        }
+        grid.appendChild(buildVarCard(v));
+      });
+      panel.appendChild(grid);
+      panelsEl.appendChild(panel);
+    });
+  }
+
+  function buildVarCard(v){
+    var card = document.createElement("div");
+    card.className = "var-card";
+    var top = document.createElement("div");
+    top.className = "var-top";
+    var label = document.createElement("label");
+    label.setAttribute("for", "in-" + v.id);
+    label.textContent = v.label;
+    var val = document.createElement("span");
+    val.className = "var-value";
+    val.id = "val-" + v.id;
+    top.appendChild(label); top.appendChild(val);
+    card.appendChild(top);
+
+    var input = document.createElement("input");
+    input.type = "range";
+    input.id = "in-" + v.id;
+    input.min = v.min; input.max = v.max; input.step = v.step;
+    input.value = state[v.id];
+    input.setAttribute("aria-describedby", "desc-" + v.id);
+    input.addEventListener("input", function(){
+      state[v.id] = parseFloat(input.value);
+      updateVarValue(v);
+      persistState();
+      recalcAll();
+    });
+    card.appendChild(input);
+
+    var minmax = document.createElement("div");
+    minmax.className = "var-minmax";
+    minmax.innerHTML = "<span>" + v.min + "</span><span>" + v.max + "</span>";
+    card.appendChild(minmax);
+
+    var desc = document.createElement("p");
+    desc.className = "var-desc";
+    desc.id = "desc-" + v.id;
+    desc.textContent = v.desc;
+    card.appendChild(desc);
+
+    return card;
+  }
+
+  function updateVarValue(v){
+    var el = $("val-" + v.id);
+    var n = state[v.id];
+    if(v.pct) el.textContent = n + "%";
+    else if(v.unit === "元" || v.unit === "元/坪" || v.unit === "元/時" || v.unit === "元/人") el.textContent = fmtInt(n) + " " + v.unit;
+    else el.textContent = n + " " + v.unit;
+  }
+
+  function selectGroup(id){
+    document.querySelectorAll(".group-panel").forEach(function(p){ p.classList.toggle("active", p.id === "panel-" + id); });
+    document.querySelectorAll(".group-tab").forEach(function(t, i){ t.setAttribute("aria-selected", GROUPS[i].id === id ? "true":"false"); });
+  }
+
+  /* ---------- Floor plan ---------- */
+  function renderFloorPlan(res){
+    var grid = $("fpGrid");
+    var cellCount = Math.max(20, Math.min(160, Math.round(state.totalPing)));
+    var kitchenCells = Math.round(cellCount * res.kitchenPct);
+    var circCells = Math.round(cellCount * res.circPct);
+    var diningCells = Math.max(0, cellCount - kitchenCells - circCells);
+
+    grid.innerHTML = "";
+    var i = 0;
+    function addCells(n, cls){
+      for(var j=0;j<n;j++){
+        var cell = document.createElement("div");
+        cell.className = "fp-cell zone-" + cls + (firstRender && !prefersReduced ? " animate" : " noanim");
+        if(firstRender && !prefersReduced) cell.style.animationDelay = (Math.min(i,60)*10) + "ms";
+        grid.appendChild(cell);
+        i++;
+      }
+    }
+    addCells(kitchenCells, "kitchen");
+    addCells(circCells, "circ");
+    addCells(diningCells, "dining");
+
+    $("lgKitchenPct").textContent = fmtPct(res.kitchenPct);
+    $("lgCircPct").textContent = fmtPct(res.circPct);
+    $("lgDiningPct").textContent = fmtPct(res.diningPct);
+    $("seatCountOut").textContent = res.seatCount;
+  }
+
+  /* ---------- Calculation engine ---------- */
+  function calculate(){
+    var s = state;
+    var kitchenPct = s.kitchenPct/100, circPct = s.circPct/100;
+    var diningPct = Math.max(0, 1 - kitchenPct - circPct);
+    var effectivePing = s.totalPing * diningPct;
+    var seatCount = Math.max(0, Math.floor(effectivePing / s.pingPerSeat));
+
+    var weekdayRevenue = seatCount * s.weekdayTurns * s.avgCheck * s.weekdayDays;
+    var weekendRevenue = seatCount * s.weekendTurns * s.avgCheck * s.weekendDays;
+    var dineInRevenue = weekdayRevenue + weekendRevenue;
+    var takeoutFrac = s.takeoutPct/100;
+    var totalRevenue = dineInRevenue * (1 + takeoutFrac);
+    if(totalRevenue <= 0) totalRevenue = 0.0001;
+
+    var rentRatio = s.monthlyRent / totalRevenue;
+    var cogsAmount = totalRevenue * (s.cogsPct/100);
+    var laborAmount = (s.kitchenFT*s.kitchenFTWage + s.kitchenPTHours*s.kitchenPTWage
+      + s.floorFT*s.floorFTWage + s.floorPTHours*s.floorPTWage) * (1 + s.laborBurdenPct/100);
+    var laborRatio = laborAmount / totalRevenue;
+    var utilitiesAmount = totalRevenue * (s.utilitiesPct/100);
+    var marketingAmount = totalRevenue * (s.marketingPct/100);
+    var monthlyDepreciation = (s.totalPing * s.renovationPerPing) / s.depreciationMonths;
+
+    var netProfit = totalRevenue - s.monthlyRent - cogsAmount - laborAmount - utilitiesAmount - marketingAmount - monthlyDepreciation;
+    var profitMargin = netProfit / totalRevenue;
+    var pingEfficiency = totalRevenue / s.totalPing;
+    var depositAmount = s.monthlyRent * s.depositMonths;
+
+    return {
+      kitchenPct:kitchenPct, circPct:circPct, diningPct:diningPct,
+      effectivePing:effectivePing, seatCount:seatCount,
+      dineInRevenue:dineInRevenue, totalRevenue:totalRevenue,
+      rentRatio:rentRatio, cogsAmount:cogsAmount, cogsRatio:s.cogsPct/100,
+      laborAmount:laborAmount, laborRatio:laborRatio,
+      utilitiesAmount:utilitiesAmount, utilitiesRatio:s.utilitiesPct/100,
+      marketingAmount:marketingAmount, marketingRatio:s.marketingPct/100,
+      monthlyDepreciation:monthlyDepreciation,
+      netProfit:netProfit, profitMargin:profitMargin,
+      pingEfficiency:pingEfficiency, depositAmount:depositAmount
+    };
+  }
+
+  function healthState(ratio, band){
+    if(!band) return "neutral";
+    return (ratio*100 >= band[0] && ratio*100 <= band[1]) ? "good" : "bad";
+  }
+
+  /* ---------- Number tween ---------- */
+  var lastTweenValues = {};
+  function tweenNumber(el, to, formatFn){
+    var from = lastTweenValues[el.id] != null ? lastTweenValues[el.id] : to;
+    lastTweenValues[el.id] = to;
+    if(prefersReduced || firstRender){ el.textContent = formatFn(to); return; }
+    var start = null, dur = 400;
+    function step(ts){
+      if(!start) start = ts;
+      var p = Math.min(1, (ts-start)/dur);
+      el.textContent = formatFn(from + (to-from)*p);
+      if(p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- Ticket ---------- */
+  var prevRowState = {};
+  function renderTicket(res){
+    var rows = [
+      {key:"rent", label:"店租占比", val:fmtPct(res.rentRatio), state: res.rentRatio<=0.15 ? "good":"bad"},
+      {key:"cogs", label:"食材成本 (COGS)", val:fmtPct(res.cogsRatio), state: healthState(res.cogsRatio,[28,34])},
+      {key:"labor", label:"人事成本", val:fmtPct(res.laborRatio), state: healthState(res.laborRatio,[26,32])},
+      {key:"utilities", label:"水電瓦斯與雜費", val:fmtPct(res.utilitiesRatio), state: healthState(res.utilitiesRatio,[4,7])},
+      {key:"marketing", label:"行銷與刷卡抽成", val:fmtPct(res.marketingRatio), state: healthState(res.marketingRatio,[2,5])},
+      {key:"depreciation", label:"CAPEX 折舊攤提", val:"$" + fmtInt(res.monthlyDepreciation), state:"neutral"}
+    ];
+    var body = $("ticketBody");
+    body.innerHTML = "";
+    var head = document.createElement("div");
+    head.className = "ticket-row";
+    head.innerHTML = '<span class="t-label">月營收目標</span><span class="t-val">$' + fmtInt(res.totalRevenue) + "</span>";
+    body.appendChild(head);
+
+    rows.forEach(function(r){
+      var row = document.createElement("div");
+      row.className = "ticket-row" + (r.state==="good"?" good":r.state==="bad"?" bad":"");
+      if(prevRowState[r.key] !== undefined && prevRowState[r.key] !== r.state && r.state !== "neutral"){
+        row.classList.add("flash");
+      }
+      prevRowState[r.key] = r.state;
+      row.innerHTML = '<span class="t-label">' + r.label + '</span><span class="t-val">' + r.val + "</span>";
+      body.appendChild(row);
+    });
+
+    var marginState = res.profitMargin>=0.15 ? "good" : "bad";
+    var total = document.createElement("div");
+    total.className = "ticket-row total" + (marginState==="good"?" good":" bad");
+    total.innerHTML = '<span class="t-label">預估淨利（淨利率 ' + fmtPct(res.profitMargin) + '）</span><span class="t-val">$' + fmtInt(res.netProfit) + "</span>";
+    body.appendChild(total);
+  }
+
+  /* ---------- Ping efficiency headline ---------- */
+  function renderPingEfficiency(res){
+    tweenNumber($("peValue"), res.pingEfficiency, function(n){ return fmtInt(n); });
+    var lowTarget = (state.monthlyRent*7)/state.totalPing;
+    var highTarget = (state.monthlyRent*8)/state.totalPing;
+    var axisMax = Math.max(highTarget*1.4, res.pingEfficiency*1.15, 10000);
+    var bandLeft = (lowTarget/axisMax)*100, bandWidth = ((highTarget-lowTarget)/axisMax)*100;
+    var band = $("peBand");
+    band.style.left = bandLeft + "%"; band.style.width = bandWidth + "%";
+    $("peMarker").style.left = Math.min(98,(res.pingEfficiency/axisMax)*100) + "%";
+    $("peMax").textContent = fmtInt(axisMax);
+  }
+
+  /* ---------- Notes ---------- */
+  var NOTE_DEFS = [
+    {title:"CAPEX 初期資本", body:function(res){ return "以每坪 " + fmtInt(state.renovationPerPing) + " 元裝潢造價估算，總建置成本約 $" + fmtInt(state.totalPing*state.renovationPerPing) + "，每月攤提折舊約 $" + fmtInt(res.monthlyDepreciation) + "。"; }},
+    {title:"押金與免租期", body:function(res){ return "押金約 $" + fmtInt(res.depositAmount) + "（" + state.depositMonths + " 個月租金）。若爭取到 " + state.freeRentDays + " 天免租期，可省下裝潢期間約 $" + fmtInt(state.monthlyRent/30*state.freeRentDays) + " 的租金流失。"; }},
+    {title:"商圈客群與離峰填補", body:function(){ return "38.5 萬等級的租金通常位於精華商圈。平日午間以上班族為主時，建議規劃快步調商業午餐（$350–450）拉高翻桌速度，晚間與假日再拉高客單價。"; }},
+    {title:"外帶／外送與零售", body:function(res){ return "內用受限於 " + res.seatCount + " 個座位，成長有天花板。目前外帶外送占比設定為 " + state.takeoutPct + "%，可透過自有品牌零售（醬包、冷凍包）善用廚房產能，創造額外營收。"; }}
+  ];
+  function renderNotes(res){
+    var grid = $("notesGrid");
+    grid.innerHTML = "";
+    NOTE_DEFS.forEach(function(n){
+      var card = document.createElement("div");
+      card.className = "note-card";
+      var h = document.createElement("h3"); h.textContent = n.title;
+      var p = document.createElement("p"); p.textContent = n.body(res);
+      card.appendChild(h); card.appendChild(p);
+      grid.appendChild(card);
+    });
+  }
+
+  /* ---------- Main recalc ---------- */
+  function recalcAll(){
+    var res = calculate();
+    renderFloorPlan(res);
+    renderPingEfficiency(res);
+    renderTicket(res);
+    renderNotes(res);
+    firstRender = false;
+  }
+
+  function syncAllInputs(){
+    VAR_DEFS.forEach(function(v){
+      var input = $("in-" + v.id);
+      if(input) input.value = state[v.id];
+      updateVarValue(v);
+    });
+  }
+
+  /* ---------- AI engine (比照 coffee-ig-planner 既有模式) ---------- */
+  var AI_PROVIDERS = {
+    claude:     {label:"Claude（Anthropic）",       defaultModel:"claude-opus-4-8"},
+    openai:     {label:"OpenAI",                    defaultModel:"gpt-4o-mini"},
+    gemini:     {label:"Gemini（Google AI Studio）", defaultModel:"gemini-3.5-flash"},
+    openrouter: {label:"OpenRouter",                defaultModel:"openai/gpt-4o-mini"}
+  };
+
+  function loadApiConfig(){
+    try{ return JSON.parse(localStorage.getItem(API_KEY)) || {}; }catch(e){ return {}; }
+  }
+  function persistApiConfig(){
+    try{
+      localStorage.setItem(API_KEY, JSON.stringify({
+        provider: $("aiProvider").value,
+        model: $("aiModel").value.trim(),
+        apiKey: $("aiKey").value.trim()
+      }));
+    }catch(e){}
+  }
+  function initAiPanel(){
+    var sel = $("aiProvider");
+    sel.innerHTML = Object.keys(AI_PROVIDERS).map(function(k){
+      return '<option value="' + k + '">' + AI_PROVIDERS[k].label + '</option>';
+    }).join("");
+    var cfg = loadApiConfig();
+    sel.value = (cfg.provider && AI_PROVIDERS[cfg.provider]) ? cfg.provider : "claude";
+    $("aiModel").value = cfg.model || AI_PROVIDERS[sel.value].defaultModel;
+    $("aiKey").value = cfg.apiKey || "";
+    sel.addEventListener("change", function(){
+      var modelEl = $("aiModel");
+      var isDefault = Object.keys(AI_PROVIDERS).some(function(k){ return AI_PROVIDERS[k].defaultModel === modelEl.value.trim(); });
+      if(!modelEl.value.trim() || isDefault) modelEl.value = AI_PROVIDERS[sel.value].defaultModel;
+      persistApiConfig();
+    });
+    $("aiModel").addEventListener("input", persistApiConfig);
+    $("aiKey").addEventListener("input", persistApiConfig);
+  }
+
+  async function callLLM(provider, model, apiKey, prompt, onRetry){
+    var url, headers, body, extract;
+    if(provider === "claude"){
+      url = "https://api.anthropic.com/v1/messages";
+      headers = {"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+      body = {model: model, max_tokens: 2000, messages: [{role:"user", content: prompt}]};
+      extract = function(d){
+        if(d.stop_reason === "refusal") throw new Error("模型拒絕了這個請求（refusal）");
+        var t = (d.content || []).filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join("");
+        if(!t) throw new Error("回應中沒有文字內容");
+        return t;
+      };
+    } else if(provider === "openai"){
+      url = "https://api.openai.com/v1/chat/completions";
+      headers = {"content-type":"application/json","authorization":"Bearer " + apiKey};
+      body = {model: model, messages: [{role:"user", content: prompt}]};
+      extract = function(d){
+        var t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if(!t) throw new Error("回應中沒有文字內容");
+        return t;
+      };
+    } else if(provider === "gemini"){
+      url = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent";
+      headers = {"content-type":"application/json","x-goog-api-key":apiKey};
+      body = {contents: [{parts: [{text: prompt}]}]};
+      extract = function(d){
+        var parts = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || [];
+        var t = parts.map(function(p){ return p.text || ""; }).join("");
+        if(!t) throw new Error("回應中沒有文字內容");
+        return t;
+      };
+    } else if(provider === "openrouter"){
+      url = "https://openrouter.ai/api/v1/chat/completions";
+      headers = {"content-type":"application/json","authorization":"Bearer " + apiKey};
+      body = {model: model, messages: [{role:"user", content: prompt}]};
+      extract = function(d){
+        var t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if(!t) throw new Error("回應中沒有文字內容");
+        return t;
+      };
+    } else {
+      throw new Error("不支援的服務商");
+    }
+    var RETRYABLE = {429:1, 500:1, 503:1, 529:1};
+    var MAX_TRIES = 3;
+    for(var attempt = 1; attempt <= MAX_TRIES; attempt++){
+      var resp = await fetch(url, {method:"POST", headers:headers, body:JSON.stringify(body), signal: AbortSignal.timeout(180000)});
+      var raw = await resp.text();
+      if(resp.ok) return extract(JSON.parse(raw));
+      var msg = raw.slice(0, 300);
+      try{ var err = JSON.parse(raw); msg = (err.error && err.error.message) || err.message || msg; }catch(e){}
+      if(RETRYABLE[resp.status] && attempt < MAX_TRIES){
+        var waitSec = attempt * 8;
+        if(onRetry) onRetry(attempt, resp.status, waitSec);
+        await new Promise(function(r){ setTimeout(r, waitSec * 1000); });
+        continue;
+      }
+      if(resp.status === 404) msg += "——這通常表示模型名稱錯誤或已停用，請確認目前可用的模型 ID";
+      if(RETRYABLE[resp.status]) msg += "——已自動重試 " + (MAX_TRIES - 1) + " 次仍失敗，多為服務商暫時過載，請稍候再試或更換模型／服務商";
+      throw new Error("API 回應 " + resp.status + "：" + msg);
+    }
+  }
+
+  function buildDiagnosisPrompt(res){
+    var flags = [];
+    if(res.rentRatio>0.15) flags.push("店租占比 " + fmtPct(res.rentRatio) + " 超過建議上限 15%");
+    if(healthState(res.cogsRatio,[28,34])==="bad") flags.push("食材成本占比 " + fmtPct(res.cogsRatio) + " 偏離建議帶 28–34%");
+    if(healthState(res.laborRatio,[26,32])==="bad") flags.push("人事成本占比 " + fmtPct(res.laborRatio) + " 偏離建議帶 26–32%");
+    if(res.profitMargin<0.15) flags.push("淨利率 " + fmtPct(res.profitMargin) + " 低於建議目標 15%");
+    var lines = [];
+    lines.push("你是一位熟悉台北／新北一線商圈餐飲經營的財務顧問。以下是一個開店可行性試算模型的目前設定與結果，請用繁體中文寫一段診斷（100–150字）加上 2-3 條具體可執行的建議，語氣專業但直接，不要空泛的理論。");
+    lines.push("空間：總坪數 " + state.totalPing + " 坪，廚房 " + state.kitchenPct + "%，動線 " + state.circPct + "%，內用座位 " + res.seatCount + " 席。");
+    lines.push("定價：客單價 " + state.avgCheck + " 元，平日 " + state.weekdayTurns + " 翻／假日 " + state.weekendTurns + " 翻。");
+    lines.push("財務：月營收 $" + fmtInt(res.totalRevenue) + "，店租占比 " + fmtPct(res.rentRatio) + "，食材 " + fmtPct(res.cogsRatio) + "，人事 " + fmtPct(res.laborRatio) + "，淨利率 " + fmtPct(res.profitMargin) + "。");
+    if(flags.length) lines.push("目前超出健康區間的項目：" + flags.join("；") + "。");
+    else lines.push("目前所有比例都落在建議健康區間內。");
+    return lines.join("\n");
+  }
+
+  function ruleBasedDiagnosis(res){
+    var sentences = [];
+    if(res.rentRatio>0.15){
+      sentences.push("店租占比達 " + fmtPct(res.rentRatio) + "，已超過 15% 的風險上限，建議優先透過提高翻桌率或客單價拉高營收基數，而不是壓低服務品質。");
+    } else {
+      sentences.push("店租占比 " + fmtPct(res.rentRatio) + " 落在健康範圍內，租金結構暫無立即風險。");
+    }
+    if(healthState(res.cogsRatio,[28,34])==="bad"){
+      sentences.push("食材成本占比 " + fmtPct(res.cogsRatio) + " 偏離建議帶，請檢視供應商採購價格與菜單訂價是否匹配。");
+    }
+    if(healthState(res.laborRatio,[26,32])==="bad"){
+      sentences.push("人事成本占比 " + fmtPct(res.laborRatio) + " 偏離建議帶，可檢視兼職排班是否集中在真正的尖峰時段，避免離峰人力閒置。");
+    }
+    if(res.profitMargin<0.15){
+      sentences.push("淨利率僅 " + fmtPct(res.profitMargin) + "，低於 15% 的目標門檻，整體模型的獲利韌性偏弱，建議重新檢視定價與翻桌率假設。");
+    } else {
+      sentences.push("淨利率 " + fmtPct(res.profitMargin) + " 達到健康目標，這個模型在目前假設下具備獲利韌性。");
+    }
+    sentences.push("坪效為每坪每月 $" + fmtInt(res.pingEfficiency) + "，可對照同商圈其他店家的公開行情，確認這個租金水準是否合理。");
+    return sentences.join("\n\n");
+  }
+
+  function showAiStatus(kind, msg){
+    var el = $("aiStatus");
+    el.className = "ai-status status-" + kind;
+    el.textContent = msg;
+  }
+  function showAiResult(text, mode){
+    var box = $("aiResult");
+    box.classList.add("show");
+    $("aiResultText").textContent = text;
+    var badge = $("aiBadge");
+    badge.className = "ai-badge " + (mode==="ai" ? "mode-ai":"mode-rule");
+    badge.textContent = mode==="ai" ? "AI 生成診斷" : "規則式健檢";
+  }
+
+  function runRuleDiagnosis(){
+    var res = calculate();
+    showAiResult(ruleBasedDiagnosis(res), "rule");
+    showAiStatus("info", "已使用規則式健檢（不需 API 金鑰）。");
+  }
+
+  async function runAiDiagnosis(){
+    var provider = $("aiProvider").value;
+    var model = $("aiModel").value.trim();
+    var apiKey = $("aiKey").value.trim();
+    var res = calculate();
+    if(!apiKey){
+      showAiStatus("info", "尚未填寫 API 金鑰，已改用規則式健檢。");
+      showAiResult(ruleBasedDiagnosis(res), "rule");
+      return;
+    }
+    var btn = $("aiDiagnoseBtn");
+    btn.disabled = true;
+    showAiStatus("info", "AI 診斷生成中…");
+    try{
+      var prompt = buildDiagnosisPrompt(res);
+      var text = await callLLM(provider, model, apiKey, prompt, function(attempt, status, waitSec){
+        showAiStatus("info", "服務商回應 " + status + "，" + waitSec + " 秒後自動重試（第 " + attempt + " 次）…");
+      });
+      showAiResult(text.trim(), "ai");
+      showAiStatus("ok", "AI 診斷已完成。");
+    }catch(e){
+      showAiStatus("err", "AI 生成失敗（" + e.message + "），已改用規則式健檢。");
+      showAiResult(ruleBasedDiagnosis(res), "rule");
+    }finally{
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- Reset ---------- */
+  function resetToDefaults(){
+    VAR_DEFS.forEach(function(v){ state[v.id] = v.def; });
+    persistState();
+    syncAllInputs();
+    firstRender = true;
+    recalcAll();
+  }
+
+  /* ---------- Init ---------- */
+  loadState();
+  buildGroupUI();
+  syncAllInputs();
+  initAiPanel();
+  recalcAll();
+
+  $("aiDiagnoseBtn").addEventListener("click", runAiDiagnosis);
+  $("ruleDiagnoseBtn").addEventListener("click", runRuleDiagnosis);
+  $("resetBtn").addEventListener("click", resetToDefaults);
+})();
+</script>
+</body>
+</html>
