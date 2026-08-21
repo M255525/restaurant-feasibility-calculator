@@ -57,6 +57,10 @@
 
 訪客計數器：`visitor-badge.laobi.icu` 的 SVG badge，`page_id=m255525.restaurantfeasibilitycalculator`，免金鑰免後端，比照姊妹專案慣例，放在 footer。
 
+## 部署
+
+已推公開 GitHub repo：<https://github.com/M255525/restaurant-feasibility-calculator>，已用 `.github/workflows/deploy-pages.yml`（Actions 部署模式，比照 `workspace-git-repos` 記載的「不要用 legacy branch-source」慣例）啟用 GitHub Pages：<https://m255525.github.io/restaurant-feasibility-calculator/>（2026-08-21）。
+
 ## 指令
 
 無建置步驟。直接開啟 `index.html`（`file://`）或用伺服器託管即可。
