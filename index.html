@@ -112,6 +112,7 @@ img,svg{max-width:100%;}
   background:#fff;border-radius:4px;padding:10px 14px;color:var(--ink-navy);
 }
 .fp-seats b{font-family:var(--font-display);font-weight:800;font-size:1.5rem;color:var(--brass-accent);}
+.fp-formula{font-family:var(--font-mono);font-size:.74rem;color:#3E5170;margin:8px 2px 0;line-height:1.6;}
 
 /* ---------- Ping efficiency headline card ---------- */
 .pe-card{
@@ -290,6 +291,7 @@ footer .reset-btn{
           <span><i class="lg-dining"></i>內用 <b id="lgDiningPct">55%</b></span>
         </div>
         <div class="fp-seats">內用座位數 → <b id="seatCountOut">40</b> 席</div>
+        <p class="fp-formula" id="fpFormula"></p>
       </div>
       <div class="pe-card">
         <h2>坪效（每坪月營收）</h2>
@@ -406,13 +408,13 @@ footer .reset-btn{
     {id:"monthlyRent", group:"space", label:"月租金", unit:"元", min:100000, max:800000, step:5000, def:385000,
       desc:"每月固定要付的租金。台北／新北一線商圈的中高租金帶通常落在 30–50 萬，通常是整套試算裡最大的固定成本。"},
     {id:"totalPing", group:"space", label:"總坪數", unit:"坪", min:20, max:150, step:1, def:55,
-      desc:"承租的總面積，決定平面圖有幾格。坪數越大，固定成本壓力越大，但座位天花板也越高。"},
+      desc:"承租的總面積，決定平面圖有幾格。真正能拿來放座位的內用坪數，還要再扣掉下面兩項廚房與動線／廁所占比。"},
     {id:"kitchenPct", group:"space", label:"廚房占比", unit:"%", min:15, max:45, step:1, def:30, pct:true,
       desc:"廚房（含備料區、冷凍冷藏、油煙處理）吃掉的坪數比例。中式熱炒／火鍋通常偏高，輕食／定食可以壓低。"},
     {id:"circPct", group:"space", label:"動線／廁所占比", unit:"%", min:5, max:25, step:1, def:15, pct:true,
       desc:"走道、廁所、出入動線的必要占比。壓太低會讓內用區動線擁擠、翻桌變慢，通常不建議低於 10%。"},
     {id:"pingPerSeat", group:"space", label:"每客席坪數", unit:"坪/席", min:0.75, max:1.2, step:0.01, def:0.76,
-      desc:"每個座位（含桌間通道）需要的空間，一般抓 0.8–1.2 坪較舒適；壓到 0.75–0.8 坪代表桌距很緊，適合快翻桌的商業客群，但要犧牲舒適度換座位數。"},
+      desc:"注意：這個數字是套用在「總坪數扣掉廚房、動線／廁所之後」剩下的內用坪數，不是總坪數——所以廚房或動線占比調高、調低，都會連動改變同一個每客席坪數能排出幾張座位。一般抓 0.8–1.2 坪較舒適；壓到 0.75–0.8 坪代表桌距很緊，適合快翻桌的商業客群，但要犧牲舒適度換座位數。實際能排多少席，見左側平面圖下方的算式。"},
 
     {id:"avgCheck", group:"pricing", label:"平均客單價", unit:"元/人", min:350, max:1200, step:10, def:700,
       desc:"每位客人平均消費。決定於定位——快商業午餐偏低，主題餐酒／精緻定食可以拉到 650–800。"},
@@ -675,6 +677,8 @@ footer .reset-btn{
     $("lgCircPct").textContent = fmtPct(res.circPct);
     $("lgDiningPct").textContent = fmtPct(res.diningPct);
     $("seatCountOut").textContent = res.seatCount;
+    $("fpFormula").textContent = Math.round(state.totalPing) + " 坪 × (100% − " + state.kitchenPct + "% − " + state.circPct + "%) = "
+      + res.effectivePing.toFixed(1) + " 坪內用 ÷ " + state.pingPerSeat.toFixed(2) + " 坪/席 ≈ " + res.seatCount + " 席";
   }
 
   /* ---------- Calculation engine ---------- */
