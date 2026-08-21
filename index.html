@@ -139,6 +139,20 @@ section.alt{background:#fff;}
 .section-head h2{font-family:var(--font-heading);font-weight:900;font-size:1.6rem;margin:0 0 8px;color:var(--ink-navy);}
 .section-head p{margin:0;color:#4C4A44;max-width:52em;font-size:.95rem;}
 
+/* ---------- Business-format presets ---------- */
+.preset-lead{font-size:.9rem;color:#4C4A44;margin:0 0 14px;max-width:52em;}
+.preset-row{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:24px;}
+.preset-btn{
+  flex:0 0 auto;width:168px;display:flex;flex-direction:column;gap:5px;text-align:left;
+  border:1px solid var(--line);background:#fff;border-radius:8px;padding:13px 14px;cursor:pointer;
+  font-family:var(--font-body);
+}
+.preset-btn:hover{border-color:var(--ink-navy);}
+.preset-btn.active{border-color:var(--brass-accent);box-shadow:0 0 0 2px rgba(169,129,47,.28);background:#FFFBF2;}
+.preset-btn .p-emoji{font-size:1.35rem;line-height:1;}
+.preset-btn .p-label{font-family:var(--font-heading);font-weight:700;font-size:.9rem;color:var(--ink-navy);}
+.preset-btn .p-blurb{font-size:.74rem;color:#5A5850;line-height:1.45;}
+
 /* ---------- Variable groups ---------- */
 .group-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
 .group-tab{
@@ -262,12 +276,12 @@ footer .reset-btn{
 
 <header class="hero">
   <div class="wrap">
-    <p class="eyebrow">台北 / 新北一線商圈・中高固定成本結構試算</p>
-    <h1>55 坪，月租 38.5 萬。<br>這盤生意，<span class="accent">能成嗎？</span></h1>
-    <p class="sub">用坪效與翻桌率回答，不是用感覺。調整下面的變數，看看空間配置怎麼變成營收，營收怎麼被成本吃掉，最後剩下多少淨利。</p>
+    <p class="eyebrow">台北 / 新北一線商圈・餐飲店經營可行性評估工具</p>
+    <h1>你的餐飲店，<span class="accent">開得成嗎？</span></h1>
+    <p class="sub">這是一個試算工具，不是特定店家的企劃書。先選一個貼近你規劃的業態套用假設，或直接調整下面的坪數、定價與成本，用坪效與翻桌率算給自己看——不是用感覺。</p>
     <div class="hero-grid">
       <div class="floorplan-card">
-        <h2>55 坪平面配置</h2>
+        <h2 id="fpTitle">平面配置</h2>
         <p class="fp-caption">每一格代表 1 坪。拖動下方「空間與坪效」的滑桿，看廚房、動線與內用怎麼分這塊地。</p>
         <div class="fp-grid" id="fpGrid" aria-hidden="true"></div>
         <div class="fp-legend">
@@ -279,7 +293,7 @@ footer .reset-btn{
       </div>
       <div class="pe-card">
         <h2>坪效（每坪月營收）</h2>
-        <p class="pe-caption">全店月營收 ÷ 總坪數。這是判斷 38.5 萬店租撐不撐得起這個空間的核心指標。</p>
+        <p class="pe-caption">全店月營收 ÷ 總坪數。這是判斷你設定的店租撐不撐得起這個空間的核心指標。</p>
         <div><span class="pe-value" id="peValue">0</span><span class="pe-unit">元 / 坪 / 月</span></div>
         <div class="pe-bar-track">
           <div class="pe-bar-band" id="peBand"></div>
@@ -299,6 +313,8 @@ footer .reset-btn{
       <h2>調整經營假設</h2>
       <p>五組變數分類（非流程步驟，可任意順序調整）：空間配置決定座位，定價與翻桌率決定營收，成本結構與人事編制決定被吃掉多少，CAPEX／押金決定開店前要準備多少現金。每個變數都有說明，告訴你它在算什麼、建議範圍從哪裡來。</p>
     </div>
+    <p class="preset-lead">不同餐飲業態的定價、翻桌節奏與成本結構差很多——先選一個貼近你規劃的業態套用假設，下面的變數面板會自動更新，接著再依你的實際狀況微調。</p>
+    <div class="preset-row" id="presetRow" role="group" aria-label="餐飲業態範例"></div>
     <div class="group-tabs" id="groupTabs" role="tablist"></div>
     <div id="groupPanels"></div>
   </div>
@@ -325,7 +341,7 @@ footer .reset-btn{
 <section class="alt">
   <div class="wrap">
     <div class="ai-card">
-      <h2>請 AI 診斷這個模型</h2>
+      <h2>請 AI 診斷目前的方案</h2>
       <p class="lead">把目前的變數與試算結果整理後，請語言模型針對台北／新北一線商圈的餐飲經營語境給診斷與建議。沒有金鑰也能用——會改用規則式健檢，直接標出哪些比例超出建議範圍。</p>
       <details class="ai-settings" id="aiSettings">
         <summary>AI 診斷設定（選用，需自備 API 金鑰）</summary>
@@ -345,7 +361,7 @@ footer .reset-btn{
         </div>
       </details>
       <div class="ai-actions">
-        <button class="btn-primary" id="aiDiagnoseBtn" type="button">請 AI 診斷這個模型</button>
+        <button class="btn-primary" id="aiDiagnoseBtn" type="button">請 AI 診斷目前的方案</button>
         <button class="btn-secondary" id="ruleDiagnoseBtn" type="button">改用規則式健檢（不需金鑰）</button>
         <span class="ai-status" id="aiStatus"></span>
       </div>
@@ -371,7 +387,7 @@ footer .reset-btn{
 <footer>
   <div class="wrap">
     <div>本工具僅供開店前的財務可行性初步評估，所有試算結果皆為估計值，實際經營請諮詢會計師／商圈實際行情。變數設定與 AI 診斷內容皆儲存在你的瀏覽器本機，不會上傳。</div>
-    <button class="reset-btn" id="resetBtn" type="button">重設為預設值</button>
+    <button class="reset-btn" id="resetBtn" type="button">重設為基準假設</button>
   </div>
 </footer>
 
@@ -382,12 +398,13 @@ footer .reset-btn{
   var prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var STATE_KEY = "restaurantCalcState";
   var API_KEY = "restaurantCalcApiConfig";
+  var PRESET_KEY = "restaurantCalcActivePreset";
   var firstRender = true;
 
   /* ---------- Variable definitions ---------- */
   var VAR_DEFS = [
     {id:"monthlyRent", group:"space", label:"月租金", unit:"元", min:100000, max:800000, step:5000, def:385000,
-      desc:"每月固定要付的租金。台北／新北一線商圈的中高租金帶通常落在 30–50 萬，是這個模型裡最大的固定成本。"},
+      desc:"每月固定要付的租金。台北／新北一線商圈的中高租金帶通常落在 30–50 萬，通常是整套試算裡最大的固定成本。"},
     {id:"totalPing", group:"space", label:"總坪數", unit:"坪", min:20, max:150, step:1, def:55,
       desc:"承租的總面積，決定平面圖有幾格。坪數越大，固定成本壓力越大，但座位天花板也越高。"},
     {id:"kitchenPct", group:"space", label:"廚房占比", unit:"%", min:15, max:45, step:1, def:30, pct:true,
@@ -397,7 +414,7 @@ footer .reset-btn{
     {id:"pingPerSeat", group:"space", label:"每客席坪數", unit:"坪/席", min:0.75, max:1.2, step:0.01, def:0.76,
       desc:"每個座位（含桌間通道）需要的空間，一般抓 0.8–1.2 坪較舒適；壓到 0.75–0.8 坪代表桌距很緊，適合快翻桌的商業客群，但要犧牲舒適度換座位數。"},
 
-    {id:"avgCheck", group:"pricing", label:"平均客單價", unit:"元/人", min:400, max:1200, step:10, def:700,
+    {id:"avgCheck", group:"pricing", label:"平均客單價", unit:"元/人", min:350, max:1200, step:10, def:700,
       desc:"每位客人平均消費。決定於定位——快商業午餐偏低，主題餐酒／精緻定食可以拉到 650–800。"},
     {id:"weekdayTurns", group:"pricing", label:"平日翻桌次數", unit:"翻/日", min:1, max:4, step:0.1, def:2.5,
       desc:"平日一天座位被坐滿又換人的次數。抓 2.5 翻代表午餐、晚餐各滿桌一輪，再加半輪下午時段。"},
@@ -454,6 +471,28 @@ footer .reset-btn{
     {id:"capex", label:"CAPEX 與押金", desc:"開店前要準備的裝潢資本與押金，以及每月要攤提多少折舊。"}
   ];
 
+  var BUSINESS_PRESETS = [
+    {id:"hotpot", emoji:"🍲", label:"精緻鍋物／涮涮鍋", blurb:"客人自己煮，翻桌較慢，食材成本高、瓦斯耗能大。",
+      overrides:{kitchenPct:25, circPct:16, pingPerSeat:0.85, avgCheck:780, weekdayTurns:2.0, weekendTurns:3.6, cogsPct:34, utilitiesPct:6.5, marketingPct:3, takeoutPct:5,
+        kitchenFT:4, kitchenFTWage:45000, kitchenPTHours:150, kitchenPTWage:210, floorFT:4, floorFTWage:42000, floorPTHours:180, floorPTWage:210}},
+    {id:"yakiniku", emoji:"🥩", label:"燒肉／炭火烤肉", blurb:"肉品成本高、排煙設備耗能大，靠高客單價撐利潤。",
+      overrides:{kitchenPct:22, circPct:17, pingPerSeat:0.9, avgCheck:850, weekdayTurns:1.8, weekendTurns:3.2, cogsPct:36, utilitiesPct:7, marketingPct:3, takeoutPct:4,
+        kitchenFT:4, kitchenFTWage:46000, kitchenPTHours:130, kitchenPTWage:210, floorFT:4, floorFTWage:42000, floorPTHours:150, floorPTWage:210}},
+    {id:"teishoku", emoji:"🍱", label:"日式定食／輕食便當", blurb:"客單價低但翻桌快，外帶便當是重要的營收補充。",
+      overrides:{kitchenPct:30, circPct:14, pingPerSeat:0.75, avgCheck:420, weekdayTurns:3.5, weekendTurns:5.0, cogsPct:32, utilitiesPct:5, marketingPct:3, takeoutPct:18,
+        kitchenFT:5, kitchenFTWage:42000, kitchenPTHours:200, kitchenPTWage:200, floorFT:6, floorFTWage:40000, floorPTHours:220, floorPTWage:200}},
+    {id:"bistro", emoji:"🍷", label:"主題餐酒館", blurb:"酒精毛利高、拉低食材成本占比，但行銷投入要跟上。",
+      overrides:{kitchenPct:25, circPct:15, pingPerSeat:0.9, avgCheck:750, weekdayTurns:2.2, weekendTurns:4.0, cogsPct:27, utilitiesPct:5, marketingPct:4.5, takeoutPct:5,
+        kitchenFT:4, kitchenFTWage:46000, kitchenPTHours:140, kitchenPTWage:220, floorFT:6, floorFTWage:44000, floorPTHours:200, floorPTWage:220}},
+    {id:"brunch", emoji:"☕", label:"早午餐／咖啡輕食", blurb:"座位舒適耗坪數，假日翻桌快，外帶咖啡占比高。",
+      overrides:{kitchenPct:20, circPct:15, pingPerSeat:1.1, avgCheck:380, weekdayTurns:2.8, weekendTurns:5.5, cogsPct:30, utilitiesPct:4.5, marketingPct:4, takeoutPct:22,
+        kitchenFT:2, kitchenFTWage:38000, kitchenPTHours:100, kitchenPTWage:190, floorFT:4, floorFTWage:36000, floorPTHours:150, floorPTWage:190}},
+    {id:"reechao", emoji:"🍜", label:"熱炒／合菜", blurb:"菜色多樣需要大廚房，圓桌合菜較占內用坪數，翻桌也慢。",
+      overrides:{kitchenPct:35, circPct:14, pingPerSeat:1.0, avgCheck:550, weekdayTurns:2.2, weekendTurns:3.8, cogsPct:33, utilitiesPct:6.5, marketingPct:2.5, takeoutPct:6,
+        kitchenFT:3, kitchenFTWage:40000, kitchenPTHours:80, kitchenPTWage:190, floorFT:2, floorFTWage:36000, floorPTHours:80, floorPTWage:190}}
+  ];
+  var activePresetId = null;
+
   var state = {};
   VAR_DEFS.forEach(function(v){ state[v.id] = v.def; });
 
@@ -462,9 +501,14 @@ footer .reset-btn{
       var saved = JSON.parse(localStorage.getItem(STATE_KEY));
       if(saved) Object.keys(saved).forEach(function(k){ if(k in state) state[k] = saved[k]; });
     }catch(e){}
+    try{ activePresetId = localStorage.getItem(PRESET_KEY) || null; }catch(e){}
   }
   function persistState(){
     try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){}
+    try{
+      if(activePresetId) localStorage.setItem(PRESET_KEY, activePresetId);
+      else localStorage.removeItem(PRESET_KEY);
+    }catch(e){}
   }
 
   function fmtInt(n){ return Math.round(n).toLocaleString("zh-TW"); }
@@ -537,6 +581,8 @@ footer .reset-btn{
     input.addEventListener("input", function(){
       state[v.id] = parseFloat(input.value);
       updateVarValue(v);
+      activePresetId = null;
+      syncPresetActiveUI();
       persistState();
       recalcAll();
     });
@@ -569,8 +615,41 @@ footer .reset-btn{
     document.querySelectorAll(".group-tab").forEach(function(t, i){ t.setAttribute("aria-selected", GROUPS[i].id === id ? "true":"false"); });
   }
 
+  /* ---------- Business-format presets ---------- */
+  function buildPresetUI(){
+    var row = $("presetRow");
+    row.innerHTML = "";
+    BUSINESS_PRESETS.forEach(function(p){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "preset-btn";
+      btn.dataset.presetId = p.id;
+      btn.innerHTML =
+        '<span class="p-emoji">' + p.emoji + '</span>' +
+        '<span class="p-label">' + p.label + '</span>' +
+        '<span class="p-blurb">' + p.blurb + '</span>';
+      btn.addEventListener("click", function(){ applyPreset(p); });
+      row.appendChild(btn);
+    });
+    syncPresetActiveUI();
+  }
+  function syncPresetActiveUI(){
+    document.querySelectorAll(".preset-btn").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.presetId === activePresetId);
+    });
+  }
+  function applyPreset(p){
+    Object.keys(p.overrides).forEach(function(k){ state[k] = p.overrides[k]; });
+    activePresetId = p.id;
+    persistState();
+    syncAllInputs();
+    syncPresetActiveUI();
+    recalcAll();
+  }
+
   /* ---------- Floor plan ---------- */
   function renderFloorPlan(res){
+    $("fpTitle").textContent = Math.round(state.totalPing) + " 坪平面配置";
     var grid = $("fpGrid");
     var cellCount = Math.max(20, Math.min(160, Math.round(state.totalPing)));
     var kitchenCells = Math.round(cellCount * res.kitchenPct);
@@ -715,7 +794,7 @@ footer .reset-btn{
   var NOTE_DEFS = [
     {title:"CAPEX 初期資本", body:function(res){ return "以每坪 " + fmtInt(state.renovationPerPing) + " 元裝潢造價估算，總建置成本約 $" + fmtInt(state.totalPing*state.renovationPerPing) + "，每月攤提折舊約 $" + fmtInt(res.monthlyDepreciation) + "。"; }},
     {title:"押金與免租期", body:function(res){ return "押金約 $" + fmtInt(res.depositAmount) + "（" + state.depositMonths + " 個月租金）。若爭取到 " + state.freeRentDays + " 天免租期，可省下裝潢期間約 $" + fmtInt(state.monthlyRent/30*state.freeRentDays) + " 的租金流失。"; }},
-    {title:"商圈客群與離峰填補", body:function(){ return "38.5 萬等級的租金通常位於精華商圈。平日午間以上班族為主時，建議規劃快步調商業午餐（$350–450）拉高翻桌速度，晚間與假日再拉高客單價。"; }},
+    {title:"商圈客群與離峰填補", body:function(){ return "月租 $" + fmtInt(state.monthlyRent) + " 這個等級通常位於精華商圈。平日午間以上班族為主時，建議規劃快步調商業午餐（$350–450）拉高翻桌速度，晚間與假日再拉高客單價。"; }},
     {title:"外帶／外送與零售", body:function(res){ return "內用受限於 " + res.seatCount + " 個座位，成長有天花板。目前外帶外送占比設定為 " + state.takeoutPct + "%，可透過自有品牌零售（醬包、冷凍包）善用廚房產能，創造額外營收。"; }}
   ];
   function renderNotes(res){
@@ -883,7 +962,7 @@ footer .reset-btn{
     if(res.profitMargin<0.15){
       sentences.push("淨利率僅 " + fmtPct(res.profitMargin) + "，低於 15% 的目標門檻，整體模型的獲利韌性偏弱，建議重新檢視定價與翻桌率假設。");
     } else {
-      sentences.push("淨利率 " + fmtPct(res.profitMargin) + " 達到健康目標，這個模型在目前假設下具備獲利韌性。");
+      sentences.push("淨利率 " + fmtPct(res.profitMargin) + " 達到健康目標，目前這組假設具備獲利韌性。");
     }
     sentences.push("坪效為每坪每月 $" + fmtInt(res.pingEfficiency) + "，可對照同商圈其他店家的公開行情，確認這個租金水準是否合理。");
     return sentences.join("\n\n");
@@ -940,8 +1019,10 @@ footer .reset-btn{
   /* ---------- Reset ---------- */
   function resetToDefaults(){
     VAR_DEFS.forEach(function(v){ state[v.id] = v.def; });
+    activePresetId = null;
     persistState();
     syncAllInputs();
+    syncPresetActiveUI();
     firstRender = true;
     recalcAll();
   }
@@ -949,6 +1030,7 @@ footer .reset-btn{
   /* ---------- Init ---------- */
   loadState();
   buildGroupUI();
+  buildPresetUI();
   syncAllInputs();
   initAiPanel();
   recalcAll();

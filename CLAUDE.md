@@ -4,13 +4,16 @@
 
 ## 這是什麼
 
-初期經營餐飲店的財務可行性試算工具。以台北／新北一線商圈中高固定成本結構（月租 38.5 萬／55 坪）為原型模型，把「坪數配置 → 座位數 → 營收 → 成本 → 淨利」整條推算鏈拆成可調整的變數，即時重算損益並依官方建議健康帶判色。**單檔前端，無後端，無序號授權**（精簡版範圍，未來如需 manual.html／PWA／跑馬燈／訪客計數器可再擴充，比照 `行銷內容工具/coffee-ig-planner` 等成熟姊妹專案）。
+**一般用途的財務可行性試算工具**，不是為特定某家餐廳寫的企劃書——文案（H1／說明文字）刻意用「你的餐飲店」通用第二人稱框架，數字全部是可調整的預設值起點，不是描述某一家真實店家（2026-08-21 依使用者回饋修正過一次，原本文案讀起來像在講一家特定店，已改掉）。以台北／新北一線商圈中高固定成本結構為情境（55 坪／月租 38.5 萬是起始基準值，非強制），把「坪數配置 → 座位數 → 營收 → 成本 → 淨利」整條推算鏈拆成可調整的變數，即時重算損益並依官方建議健康帶判色。**單檔前端，無後端，無序號授權**（精簡版範圍，未來如需 manual.html／PWA／跑馬燈／訪客計數器可再擴充，比照 `行銷內容工具/coffee-ig-planner` 等成熟姊妹專案）。
+
+**六種餐飲業態快速範例**（`BUSINESS_PRESETS`，變數面板上方的藥丸按鈕列）：精緻鍋物／涮涮鍋、燒肉、日式定食／輕食便當、主題餐酒館、早午餐／咖啡輕食、熱炒／合菜。每個 preset 覆寫空間配置、定價翻桌、成本占比**與人事編制**（`kitchenFT`/`kitchenPTHours`/`floorFT`/`floorPTHours` 等）——**人事編制一定要跟著業態一起換**，否則低客單價業態（早午餐、熱炒）套用高客單價業態的人力規模，人事占比會爆掉、淨利率會出現不合理的深度負值（曾實測到 -52%，已修正）。目前的預設值刻意讓「熱炒／合菜」在 55坪／38.5萬租金這個情境下維持小幅負利潤（約 -3.7%，租金占比近 30%）——這是刻意保留的洞察（翻桌慢、客單價不夠高的業態撐不住這個租金檔次的一線商圈），不是計算錯誤，不要為了讓所有 preset 都轉正而反過來調整假設。
 
 ## 架構
 
 `index.html` 單一 IIFE `<script>`，無外部資料檔：
 
 - `VAR_DEFS` — 所有變數的定義陣列（id/group/label/unit/min/max/step/def/desc，部分含 `band` 健康區間或 `subgroup` 子分類）。UI 由這份定義動態產生（`buildGroupUI`/`buildVarCard`），不是手刻 20+ 組幾乎重複的表單標記。
+- `BUSINESS_PRESETS` — 6 組業態範例（見上）。`buildPresetUI()` 產生藥丸按鈕，`applyPreset(p)` 用 `Object.assign` 覆寫對應的 `state` 欄位並重算；使用者手動拖任何滑桿會清掉 `activePresetId`（表示目前是自訂組合，不再對應任何一個 preset），`syncPresetActiveUI()` 負責同步按鈕的 active 樣式。`activePresetId` 額外存一份到 `localStorage`（`restaurantCalcActivePreset`），reload 後還原選取狀態。
 - `state` — 目前所有變數值，載入時從 `localStorage`（`restaurantCalcState`）還原，每次滑桿變動即時 persist。
 - `calculate()` — 核心計算引擎：坪數配置 → 座位數 → 平/假日營收 → 各項成本金額與占比 → 淨利／淨利率／坪效。公式細節見計畫檔（`~/.claude/plans/api-38-5-synchronous-cerf.md`，若已被清除則以此函式本體為準）。
 - `healthState(ratio, band)` — 依建議健康帶（如食材成本 28–34%）判定 `good`/`bad`，驅動票根與診斷的紅綠判色。店租占比與淨利率用單一門檻（15%）判定，其餘用區間。
@@ -24,8 +27,9 @@
 
 - `restaurantCalcState` — 目前所有變數值（reload 後還原，不會跳回預設值）。
 - `restaurantCalcApiConfig` — `{provider, model, apiKey}`，金鑰只存本機瀏覽器，不經任何後端。
+- `restaurantCalcActivePreset` — 目前選取中的業態 preset id（沒有選取或已手動調整過滑桿則不存在此 key）。
 
-「重設為預設值」按鈕清掉 `restaurantCalcState` 並還原成 brief 原文的預設值（55坪／38.5萬租金／客單價700等）。
+「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）。
 
 ## 指令
 
