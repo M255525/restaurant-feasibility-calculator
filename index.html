@@ -45,6 +45,14 @@ img,svg{max-width:100%;}
 
 /* ---------- Header / Hero ---------- */
 .hero{background:var(--ink-navy);color:#EEF3F8;padding:56px 0 64px;}
+.hero-utility{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin:0 0 22px;}
+.hero-util-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-body);font-size:.8rem;font-weight:500;
+  background:rgba(255,255,255,.07);color:#EDF2F8;border:1px solid #3A4E6E;
+  border-radius:999px;padding:8px 16px;cursor:pointer;text-decoration:none;
+}
+.hero-util-btn:hover{border-color:var(--brass-accent);}
 .eyebrow{
   font-family:var(--font-mono);
   font-size:.78rem;
@@ -321,7 +329,7 @@ body.has-marquee{padding-top:30px;}
 .print-only{display:none;}
 #pdfWatermark{display:none;}
 @media print{
-  #marqueeBar, .preset-lead, .preset-row, .group-tabs, .var-card input[type=range], .var-minmax,
+  #marqueeBar, .hero-utility, .preset-lead, .preset-row, .group-tabs, .var-card input[type=range], .var-minmax,
   .ai-prompt-block, .ai-settings, .ai-actions, footer .footer-links{
     display:none !important;
   }
@@ -352,6 +360,10 @@ body.has-marquee{padding-top:30px;}
 
 <header class="hero">
   <div class="wrap">
+    <div class="hero-utility">
+      <a class="hero-util-btn" href="manual.html">📖 操作手冊</a>
+      <button type="button" class="hero-util-btn" id="pdfExportBtn">📄 匯出 PDF</button>
+    </div>
     <p class="eyebrow">台北 / 新北一線商圈・餐飲店經營可行性評估工具</p>
     <h1>你的餐飲店，<span class="accent">開得成嗎？</span></h1>
     <p class="sub">這是一個試算工具，不是特定店家的企劃書。先選一個貼近你規劃的業態套用假設，或直接調整下面的坪數、定價與成本，用坪效與翻桌率算給自己看——不是用感覺。</p>
@@ -475,8 +487,6 @@ body.has-marquee{padding-top:30px;}
       <span>製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com" style="color:#AEC0D6;">tsaimark@gmail.com</a></span>
       <span class="footer-links">
         <img class="visitor-badge" src="https://visitor-badge.laobi.icu/badge?page_id=m255525.restaurantfeasibilitycalculator" alt="訪客次數" style="vertical-align:middle;height:20px;">
-        <a class="manual-link" href="manual.html">操作手冊 →</a>
-        <button type="button" id="pdfExportBtn" class="footer-link-btn">📄 匯出 PDF</button>
         <button type="button" id="installBtn" class="footer-link-btn">📲 加入主畫面</button>
         <button class="reset-btn" id="resetBtn" type="button">重設為基準假設</button>
       </span>

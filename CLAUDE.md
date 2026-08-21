@@ -34,7 +34,9 @@
 
 「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）。
 
-## PDF 匯出（`#pdfExportBtn`）
+## PDF 匯出（`#pdfExportBtn`）與操作手冊連結
+
+2026-08-21 依使用者回饋，「📄 匯出 PDF」與「📖 操作手冊」從頁尾移到 hero 區塊右上角的 `.hero-utility` 列（`#pdfExportBtn` id 不變，只是換了 DOM 位置，JS 綁定不受影響）；頁尾只保留「📲 加入主畫面」／「重設為基準假設」／訪客計數器。`.hero-utility` 在 `@media print` 一併隱藏（不是報表內容）。
 
 不依賴任何 PDF 函式庫，比照 `資料儀表板/Dashboard` 既有模式：按鈕呼叫 `window.print()`，實際排版全靠 `@media print` CSS 規則：
 
