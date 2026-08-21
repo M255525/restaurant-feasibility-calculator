@@ -194,6 +194,29 @@ section.alt{background:#fff;}
 .var-card .var-minmax{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.7rem;color:#8A93A0;margin-bottom:8px;}
 .var-card .var-desc{font-size:.82rem;color:#5A5850;margin:0;}
 
+/* ---------- Saved plans ---------- */
+.save-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px;}
+.save-row input{
+  flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;
+  font-family:var(--font-body);font-size:.88rem;background:#fff;color:var(--ink-black);
+}
+.saved-status{font-size:.82rem;color:var(--surplus-green);}
+.saved-list{list-style:none;padding:0;margin:0;display:grid;gap:10px;}
+.saved-empty{color:#8A93A0;font-size:.85rem;}
+.saved-item{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+}
+.saved-info{display:flex;flex-direction:column;gap:2px;}
+.saved-name{font-family:var(--font-heading);font-weight:700;font-size:.9rem;color:var(--ink-navy);}
+.saved-meta{font-family:var(--font-mono);font-size:.72rem;color:#8A93A0;}
+.saved-actions{display:flex;flex-wrap:wrap;gap:6px;}
+.saved-actions button{
+  font-family:var(--font-body);font-size:.76rem;border:1px solid var(--line);background:#fff;
+  color:var(--ink-navy);border-radius:6px;padding:6px 12px;cursor:pointer;
+}
+.saved-actions button:hover{border-color:var(--brass-accent);}
+
 /* ---------- Ticket ---------- */
 .ticket-wrap{display:flex;justify-content:center;}
 .ticket{
@@ -424,6 +447,22 @@ body.has-marquee{padding-top:30px;}
 <section>
   <div class="wrap">
     <div class="section-head">
+      <p class="kicker">Saved</p>
+      <h2>已儲存的方案</h2>
+      <p>把目前調整好的變數存成一筆具名紀錄，方便之後比較不同方案（例如同一個業態的保守版跟積極版）。只存在你的瀏覽器本機，不會上傳。</p>
+    </div>
+    <div class="save-row">
+      <input type="text" id="saveName" placeholder="輸入方案名稱（留白會用目前業態範例名稱）">
+      <button type="button" class="btn-primary" id="saveBtn">💾 儲存目前方案</button>
+      <span class="saved-status" id="savedStatus"></span>
+    </div>
+    <ul class="saved-list" id="savedList"></ul>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="section-head">
       <p class="kicker">P&amp;L</p>
       <h2>本月損益試算票根</h2>
       <p>依目前的變數即時重算。綠字＝落在建議健康區間，紅字＝超出建議範圍，需要留意。</p>
@@ -439,7 +478,7 @@ body.has-marquee{padding-top:30px;}
   </div>
 </section>
 
-<section class="alt">
+<section>
   <div class="wrap">
     <div class="ai-card">
       <h2>請 AI 診斷目前的方案</h2>
@@ -479,7 +518,7 @@ body.has-marquee{padding-top:30px;}
   </div>
 </section>
 
-<section>
+<section class="alt">
   <div class="wrap">
     <div class="section-head">
       <p class="kicker">Beyond the model</p>
@@ -760,6 +799,129 @@ body.has-marquee{padding-top:30px;}
     syncAllInputs();
     syncPresetActiveUI();
     recalcAll();
+  }
+
+  /* ---------- Saved plans (多筆具名快照，只存在本機瀏覽器) ---------- */
+  var SAVED_KEY = "restaurantCalcSavedPlans";
+  function loadSavedPlans(){
+    try{ return JSON.parse(localStorage.getItem(SAVED_KEY)) || []; }catch(e){ return []; }
+  }
+  function persistSavedPlans(list){
+    try{ localStorage.setItem(SAVED_KEY, JSON.stringify(list)); }catch(e){}
+  }
+  function presetLabelFor(id){
+    var found = null;
+    BUSINESS_PRESETS.forEach(function(p){ if(p.id === id) found = p.label; });
+    return found;
+  }
+  function showSavedStatus(msg){
+    $("savedStatus").textContent = msg;
+  }
+  function renderSavedList(){
+    var list = loadSavedPlans();
+    var el = $("savedList");
+    el.innerHTML = "";
+    if(!list.length){
+      var empty = document.createElement("li");
+      empty.className = "saved-empty";
+      empty.textContent = "還沒有儲存任何方案";
+      el.appendChild(empty);
+      return;
+    }
+    list.forEach(function(item){
+      var li = document.createElement("li");
+      li.className = "saved-item";
+      li.dataset.id = item.id;
+
+      var info = document.createElement("div");
+      info.className = "saved-info";
+      var nameEl = document.createElement("span");
+      nameEl.className = "saved-name";
+      nameEl.textContent = item.name;
+      var metaEl = document.createElement("span");
+      metaEl.className = "saved-meta";
+      var presetLabel = presetLabelFor(item.activePresetId);
+      metaEl.textContent = item.savedAt + (presetLabel ? "　｜　" + presetLabel : "　｜　自訂組合");
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+
+      var actions = document.createElement("div");
+      actions.className = "saved-actions";
+      [["load","載入"],["rename","重新命名"],["delete","刪除"]].forEach(function(pair){
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.action = pair[0];
+        btn.textContent = pair[1];
+        actions.appendChild(btn);
+      });
+
+      li.appendChild(info);
+      li.appendChild(actions);
+      el.appendChild(li);
+    });
+  }
+  function onSaveClick(){
+    var name = $("saveName").value.trim() || presetLabelFor(activePresetId) || "未命名方案";
+    var list = loadSavedPlans();
+    var existingIdx = -1;
+    list.forEach(function(x, i){ if(x.name === name) existingIdx = i; });
+    if(existingIdx >= 0 && !confirm("已有同名方案「" + name + "」，要覆蓋嗎？")) return;
+    var item = {
+      id: existingIdx >= 0 ? list[existingIdx].id : String(Date.now()),
+      name: name,
+      savedAt: new Date().toLocaleString("zh-TW", {hour12:false}),
+      activePresetId: activePresetId,
+      state: JSON.parse(JSON.stringify(state))
+    };
+    if(existingIdx >= 0) list[existingIdx] = item; else list.push(item);
+    persistSavedPlans(list);
+    renderSavedList();
+    $("saveName").value = "";
+    showSavedStatus("已儲存「" + name + "」。");
+  }
+  function initSavedPlans(){
+    renderSavedList();
+    $("saveBtn").addEventListener("click", onSaveClick);
+    $("savedList").addEventListener("click", function(e){
+      var btn = e.target.closest("button[data-action]");
+      if(!btn) return;
+      var li = e.target.closest(".saved-item");
+      if(!li) return;
+      var list = loadSavedPlans();
+      var idx = -1;
+      list.forEach(function(x, i){ if(x.id === li.dataset.id) idx = i; });
+      if(idx < 0) return;
+      var item = list[idx];
+      var action = btn.dataset.action;
+
+      if(action === "load"){
+        if(!confirm("載入「" + item.name + "」會覆蓋目前所有變數設定，確定嗎？")) return;
+        Object.keys(state).forEach(function(k){
+          if(Object.prototype.hasOwnProperty.call(item.state, k)) state[k] = item.state[k];
+        });
+        activePresetId = item.activePresetId || null;
+        persistState();
+        syncAllInputs();
+        syncPresetActiveUI();
+        firstRender = true;
+        recalcAll();
+        showSavedStatus("已載入「" + item.name + "」。");
+      } else if(action === "rename"){
+        var newName = prompt("重新命名為：", item.name);
+        if(newName === null) return;
+        newName = newName.trim();
+        if(!newName) return;
+        item.name = newName;
+        persistSavedPlans(list);
+        renderSavedList();
+      } else if(action === "delete"){
+        if(!confirm("確定要刪除「" + item.name + "」嗎？此動作無法復原。")) return;
+        list.splice(idx, 1);
+        persistSavedPlans(list);
+        renderSavedList();
+        showSavedStatus("已刪除「" + item.name + "」。");
+      }
+    });
   }
 
   /* ---------- Floor plan ---------- */
@@ -1235,6 +1397,7 @@ body.has-marquee{padding-top:30px;}
   buildPresetUI();
   syncAllInputs();
   initAiPanel();
+  initSavedPlans();
   recalcAll();
 
   $("aiDiagnoseBtn").addEventListener("click", runAiDiagnosis);

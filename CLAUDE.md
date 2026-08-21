@@ -25,14 +25,16 @@
 - `buildDiagnosisPrompt(res, extra)` — 把目前變數與試算結果（含哪些比例超出健康帶）整理成 prompt，請模型寫繁中診斷＋建議；`extra` 非空時以「特別要求：」附加在 prompt 最後一行。
 - `AI_PROMPT_PRESETS` — 5 組診斷角度範例（整體健檢／坪效與選址適配度／成本優化排序／貸款募資簡報用語／悲觀情境壓力測試），`buildAiPromptUI()` 產生 `#aiPromptRow` 的按鈕，點擊即把對應文字填入 `#aiExtra`（使用者仍可自行編輯或清空）。**只影響 AI 診斷路徑**——`ruleBasedDiagnosis` 是純規則式 fallback，不讀取 `#aiExtra`，固定套用通用邏輯。`extra` 欄位一併存進 `restaurantCalcApiConfig`（見下）。
 - `ruleBasedDiagnosis(res)` — 無金鑰或 AI 呼叫失敗時的規則式健檢 fallback，依超標項目組出對應建議句，確保沒有金鑰也能得到有意義的診斷。
+- 已儲存的方案（2026-08-21 新增，多筆具名快照）—— **逐字比照** `行銷內容工具/coffee-ig-planner` 的「已儲存的計畫」模式，欄位改成這個工具自己的：`loadSavedPlans()`/`persistSavedPlans(list)` 讀寫 `restaurantCalcSavedPlans`；`onSaveClick()` 存目前 `state` 的深拷貝（`JSON.parse(JSON.stringify(state))`）＋當時的 `activePresetId`＋名稱（留白 fallback 成目前業態 preset 的 label，再 fallback 成「未命名方案」）＋存檔時間，同名會詢問是否覆蓋；`renderSavedList()` 全程用 `createElement`/`textContent` 組 DOM（不用字串拼接 `innerHTML`，避免使用者輸入的方案名稱裡若含 `<`/`>` 造成注入，跟 coffee-ig-planner 的既有防護原則一致）；`initSavedPlans()` 的清單用單一事件委派（`data-action="load|rename|delete"`）處理三個動作，「載入」會覆蓋目前所有變數並清掉 `firstRender`（讓平面圖重播一次 stagger 動畫，跟手動重設一樣）。**沒有下載功能**（跟 coffee-ig-planner 不同——coffee-ig-planner 每個存檔可以個別下載成 .txt，這裡如果要保留副本，是引導使用者載入該方案後再用「匯出 PDF」，沒有做第二套下載邏輯，避免功能重複）。已用 Node 建假 DOM＋假 localStorage 跑過存檔／同名覆蓋／清單渲染的流程，確認無例外拋出。
 
 ### localStorage
 
 - `restaurantCalcState` — 目前所有變數值（reload 後還原，不會跳回預設值）。
 - `restaurantCalcApiConfig` — `{provider, model, apiKey, extra}`，金鑰只存本機瀏覽器，不經任何後端；`extra` 是診斷角度文字（見上）。
 - `restaurantCalcActivePreset` — 目前選取中的業態 preset id（沒有選取或已手動調整過滑桿則不存在此 key）。
+- `restaurantCalcSavedPlans` — 已儲存方案的具名清單（`{id,name,savedAt,activePresetId,state}[]`），跟上面單筆自動存檔的 `restaurantCalcState` 是兩套獨立機制、互不影響。
 
-「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）。
+「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）；**不會**動到 `restaurantCalcSavedPlans`，已儲存的方案要透過清單自己的「刪除」才會移除。
 
 ## PDF 匯出（`#pdfExportBtn`）與操作手冊連結
 
