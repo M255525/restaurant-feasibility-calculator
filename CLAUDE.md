@@ -38,13 +38,13 @@
 
 2026-08-21 依使用者回饋，「📄 匯出 PDF」與「📖 操作手冊」從頁尾移到 hero 區塊右上角的 `.hero-utility` 列（`#pdfExportBtn` id 不變，只是換了 DOM 位置，JS 綁定不受影響）；頁尾只保留「📲 加入主畫面」／「重設為基準假設」／訪客計數器。`.hero-utility` 在 `@media print` 一併隱藏（不是報表內容）。
 
-不依賴任何 PDF 函式庫，比照 `資料儀表板/Dashboard` 既有模式：按鈕呼叫 `window.print()`，實際排版全靠 `@media print` CSS 規則：
+不依賴任何 PDF 函式庫：按鈕呼叫 `window.print()`。
 
-- `.group-panel{display:block !important}` 讓五組變數分類全部展開（畫面上平常一次只顯示一組 active 分頁）。
-- 隱藏所有互動控制：滑桿本體（`.var-card input[type=range]`）、業態範例按鈕列、AI 設定／診斷角度／操作按鈕、頁尾整組 `.footer-links`（含 API 金鑰輸入框，基於安全考量絕不印出表單控制項本身）。
-- `.ai-card` 預設 `display:none`，只有 `:has(.ai-result.show)` 時才顯示——曾產生過 AI 診斷結果才會一併印出，沒產生過不會留下一個空區塊（`:has()` 需要 Chromium 105+／Safari 16.4+，工作區其餘專案也未特別支援更舊瀏覽器，此處比照辦理）。
-- `#pdfWatermark`（浮水印）：純 CSS，`position:fixed` 覆蓋整頁，`background-image` 用 inline SVG data URI 平鋪重複「僅供試算參考・非正式財務報表」字樣，`rgba(27,42,68,0.14)` 低透明度、`pointer-events:none`。只在 `@media print` 顯示，畫面上平常 `display:none`。跟 `IPA_Kano` 用真人照片圖片浮水印（課程授權情境）不同——這個工具沒有序號授權，浮水印純粹是「這是試算工具產出、不是正式財務報表」的免責聲明，用文字 SVG 就夠、不需要嵌圖片資產。
-- `#printMeta`（`.print-only`，平常 `display:none`）：`beforeprint` 事件觸發時才寫入「產生時間＋工具名稱」文字，顯示在報表最上方。
+**2026-08-21 改版**：原本比照 `資料儀表板/Dashboard` 用 `@media print` 逐一切換數十個互動元件的 `display`（切分頁、隱藏滑桿、`.ai-card:has(...)` 等），使用者實測回報「匯出時候是沒有內容」——這條路線太脆弱，任何一條規則沒對到就整頁空白，且瀏覽器「列印背景圖形」選項預設關閉時 `background-image` 浮水印也不會印出來。**改成「獨立靜態報表」路線**，不再嘗試讓互動版 UI 本身可列印：
+
+- `buildPrintReport()`：按下「匯出 PDF」時才呼叫，用目前的 `state`／`calculate()`／`GROUPS`／`VAR_DEFS` 組出一份純 HTML 報表字串（標題＋產生時間、空間配置算式、五組變數總覽表、損益票根表格、AI 診斷結果〔若曾產生過〕、免責聲明），寫入 `#printReportRoot.innerHTML`，才呼叫 `window.print()`。所有動態文字（尤其 AI 回傳的診斷內容）一律過 `escapeHtml()` 再拼字串，避免萬一 AI 回應內容含 HTML/script 被當成標記注入。
+- `@media print` 規則簡化成一條：`body *{visibility:hidden} #printReportRoot,#pdfWatermark,及其子元素{visibility:visible}`，`#printReportRoot{position:absolute;top:0;left:0}` 拉到頁面最前面——不用再猜互動元件個別的 display 狀態，永遠只印這兩個容器的內容，其餘全部隱藏但不影響版面（`visibility:hidden` 保留 layout 但不繪製，`position:absolute` 讓報表脫離原本文件流從頁首開始）。已用 Node 建假 DOM 跑過 `buildPrintReport()`，確認輸出非空、標籤配對正確、AI 文字內的 `<script>` 有被正確跳脫。
+- `#pdfWatermark`（浮水印）：**不用 `background-image`**（會被瀏覽器「列印背景圖形」選項擋掉），改成 HTML 直接寫死 21 個 `<span class="wm-text">僅供試算參考</span>`，`@media print` 用 CSS Grid（3欄×7列）排列、`rotate(-28deg)`、`color:rgba(27,42,68,.22)`——前景文字顏色不受「列印背景圖形」開關影響，永遠會印出來。跟 `IPA_Kano` 用真人照片圖片浮水印（課程授權情境）不同——這個工具沒有序號授權，浮水印純粹是免責聲明，用重複文字就夠。
 
 ## 頂部跑馬燈與 PWA 加入主畫面
 
