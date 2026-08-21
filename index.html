@@ -216,6 +216,22 @@ section.alt{background:#fff;}
 .ai-settings summary::-webkit-details-marker{display:none;}
 .ai-settings summary::before{content:"▸ ";color:var(--brass-accent);}
 .ai-settings[open] summary::before{content:"▾ ";}
+.ai-prompt-block{margin-bottom:16px;}
+.ai-prompt-label{font-size:.78rem;color:#AEC0D6;margin:0 0 8px;}
+.ai-prompt-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.ai-prompt-btn{
+  font-family:var(--font-body);font-size:.78rem;
+  background:rgba(255,255,255,.06);color:#EDF2F8;border:1px solid #3A4E6E;
+  border-radius:999px;padding:7px 14px;cursor:pointer;
+}
+.ai-prompt-btn:hover{border-color:var(--brass-accent);}
+.ai-prompt-btn.active{background:var(--brass-accent);color:#231A05;border-color:var(--brass-accent);}
+.ai-extra{
+  width:100%;padding:10px 12px;border-radius:6px;border:1px solid #3A4E6E;
+  background:#0F1B30;color:#EDF2F8;font-family:var(--font-body);font-size:.85rem;
+  resize:vertical;min-height:64px;box-sizing:border-box;
+}
+.ai-extra::placeholder{color:#7488A6;}
 .ai-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:0 16px 16px;}
 .ai-fields label{display:block;font-size:.76rem;color:#AEC0D6;margin-bottom:4px;}
 .ai-fields input,.ai-fields select{
@@ -345,6 +361,11 @@ footer .reset-btn{
     <div class="ai-card">
       <h2>請 AI 診斷目前的方案</h2>
       <p class="lead">把目前的變數與試算結果整理後，請語言模型針對台北／新北一線商圈的餐飲經營語境給診斷與建議。沒有金鑰也能用——會改用規則式健檢，直接標出哪些比例超出建議範圍。</p>
+      <div class="ai-prompt-block">
+        <p class="ai-prompt-label">診斷角度（選用，點選帶入範本、或自行編輯——只影響 AI 診斷，規則式健檢固定套用通用邏輯）</p>
+        <div class="ai-prompt-row" id="aiPromptRow"></div>
+        <textarea id="aiExtra" class="ai-extra" rows="3" placeholder="留空＝一般整體健檢。也可以點上面的按鈕帶入範本，或自己輸入想請 AI 特別關注的角度。"></textarea>
+      </div>
       <details class="ai-settings" id="aiSettings">
         <summary>AI 診斷設定（選用，需自備 API 金鑰）</summary>
         <div class="ai-fields">
@@ -848,10 +869,35 @@ footer .reset-btn{
       localStorage.setItem(API_KEY, JSON.stringify({
         provider: $("aiProvider").value,
         model: $("aiModel").value.trim(),
-        apiKey: $("aiKey").value.trim()
+        apiKey: $("aiKey").value.trim(),
+        extra: $("aiExtra").value
       }));
     }catch(e){}
   }
+
+  var AI_PROMPT_PRESETS = [
+    {id:"general", label:"整體健檢", text:"請針對目前所有成本占比逐一檢查是否落在健康區間，用條列式指出哪幾項最需要優先處理，並說明為什麼。"},
+    {id:"location", label:"坪效與選址適配度", text:"請特別評估這個業態在目前設定的租金與坪數條件下是否「選對地方」；如果租金負擔過重，建議是調整營運假設，還是換一個租金級別更合適的地點。"},
+    {id:"costcut", label:"成本優化排序", text:"請忽略目前已經健康的項目，只針對超出建議範圍的成本，依對淨利影響金額大小排序，給出最多 3 項優先改善的具體做法。"},
+    {id:"formal", label:"貸款／募資簡報用語", text:"請用可以放進銀行貸款申請書或投資人簡報的正式語氣改寫這段診斷，避免情緒化用詞，聚焦在數字與可執行性。"},
+    {id:"stress", label:"悲觀情境壓力測試", text:"請假設實際營收只能達到目前設定的 70%，重新評估這個方案還能撐多久、哪個成本項目會第一個出問題，並給出因應建議。"}
+  ];
+  function buildAiPromptUI(){
+    var row = $("aiPromptRow");
+    row.innerHTML = "";
+    AI_PROMPT_PRESETS.forEach(function(p){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ai-prompt-btn";
+      btn.textContent = p.label;
+      btn.addEventListener("click", function(){
+        $("aiExtra").value = p.text;
+        persistApiConfig();
+      });
+      row.appendChild(btn);
+    });
+  }
+
   function initAiPanel(){
     var sel = $("aiProvider");
     sel.innerHTML = Object.keys(AI_PROVIDERS).map(function(k){
@@ -861,6 +907,9 @@ footer .reset-btn{
     sel.value = (cfg.provider && AI_PROVIDERS[cfg.provider]) ? cfg.provider : "claude";
     $("aiModel").value = cfg.model || AI_PROVIDERS[sel.value].defaultModel;
     $("aiKey").value = cfg.apiKey || "";
+    $("aiExtra").value = cfg.extra || "";
+    $("aiExtra").addEventListener("input", persistApiConfig);
+    buildAiPromptUI();
     sel.addEventListener("change", function(){
       var modelEl = $("aiModel");
       var isDefault = Object.keys(AI_PROVIDERS).some(function(k){ return AI_PROVIDERS[k].defaultModel === modelEl.value.trim(); });
@@ -934,7 +983,7 @@ footer .reset-btn{
     }
   }
 
-  function buildDiagnosisPrompt(res){
+  function buildDiagnosisPrompt(res, extra){
     var flags = [];
     if(res.rentRatio>0.15) flags.push("店租占比 " + fmtPct(res.rentRatio) + " 超過建議上限 15%");
     if(healthState(res.cogsRatio,[28,34])==="bad") flags.push("食材成本占比 " + fmtPct(res.cogsRatio) + " 偏離建議帶 28–34%");
@@ -947,6 +996,7 @@ footer .reset-btn{
     lines.push("財務：月營收 $" + fmtInt(res.totalRevenue) + "，店租占比 " + fmtPct(res.rentRatio) + "，食材 " + fmtPct(res.cogsRatio) + "，人事 " + fmtPct(res.laborRatio) + "，淨利率 " + fmtPct(res.profitMargin) + "。");
     if(flags.length) lines.push("目前超出健康區間的項目：" + flags.join("；") + "。");
     else lines.push("目前所有比例都落在建議健康區間內。");
+    if(extra && extra.trim()) lines.push("特別要求：" + extra.trim());
     return lines.join("\n");
   }
 
@@ -1006,7 +1056,7 @@ footer .reset-btn{
     btn.disabled = true;
     showAiStatus("info", "AI 診斷生成中…");
     try{
-      var prompt = buildDiagnosisPrompt(res);
+      var prompt = buildDiagnosisPrompt(res, $("aiExtra").value);
       var text = await callLLM(provider, model, apiKey, prompt, function(attempt, status, waitSec){
         showAiStatus("info", "服務商回應 " + status + "，" + waitSec + " 秒後自動重試（第 " + attempt + " 次）…");
       });

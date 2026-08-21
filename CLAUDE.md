@@ -20,13 +20,14 @@
 - `renderFloorPlan` — 互動平面圖（signature element）：依廚房/動線/內用占比即時重排色塊，首次載入才做 stagger fade-in（`prefers-reduced-motion` 時跳過）。平面圖下方 `#fpFormula` 會即時印出完整算式（總坪數 × 內用占比 = 內用坪數 ÷ 每客席坪數 ≈ 座位數），讓「每客席坪數是套用在扣除廚房/動線後的內用坪數，不是總坪數」這件事在畫面上是透明可查的，不用只靠 `pingPerSeat` 的說明文字（2026-08-21 依使用者回饋補上，見 CLAUDE.md 記憶檔）。
 - `renderTicket` — 損益試算票根（monospace 收據卡），比例跨過健康門檻時該行短暫 flash。
 - `AI_PROVIDERS`／`callLLM`／BYOK 設定面板 — **逐字比照** `行銷內容工具/coffee-ig-planner/index.html` 已驗證的實作搬過來（Claude 需要 `anthropic-dangerous-direct-browser-access` header 才能瀏覽器直連；OpenAI/Gemini/OpenRouter 無此限制；429/500/503/529 自動重試 3 次）。修改任一邊的 AI 引擎邏輯時，考慮是否也要同步另外兩邊。
-- `buildDiagnosisPrompt(res)` — 把目前變數與試算結果（含哪些比例超出健康帶）整理成 prompt，請模型寫繁中診斷＋建議。
+- `buildDiagnosisPrompt(res, extra)` — 把目前變數與試算結果（含哪些比例超出健康帶）整理成 prompt，請模型寫繁中診斷＋建議；`extra` 非空時以「特別要求：」附加在 prompt 最後一行。
+- `AI_PROMPT_PRESETS` — 5 組診斷角度範例（整體健檢／坪效與選址適配度／成本優化排序／貸款募資簡報用語／悲觀情境壓力測試），`buildAiPromptUI()` 產生 `#aiPromptRow` 的按鈕，點擊即把對應文字填入 `#aiExtra`（使用者仍可自行編輯或清空）。**只影響 AI 診斷路徑**——`ruleBasedDiagnosis` 是純規則式 fallback，不讀取 `#aiExtra`，固定套用通用邏輯。`extra` 欄位一併存進 `restaurantCalcApiConfig`（見下）。
 - `ruleBasedDiagnosis(res)` — 無金鑰或 AI 呼叫失敗時的規則式健檢 fallback，依超標項目組出對應建議句，確保沒有金鑰也能得到有意義的診斷。
 
 ### localStorage
 
 - `restaurantCalcState` — 目前所有變數值（reload 後還原，不會跳回預設值）。
-- `restaurantCalcApiConfig` — `{provider, model, apiKey}`，金鑰只存本機瀏覽器，不經任何後端。
+- `restaurantCalcApiConfig` — `{provider, model, apiKey, extra}`，金鑰只存本機瀏覽器，不經任何後端；`extra` 是診斷角度文字（見上）。
 - `restaurantCalcActivePreset` — 目前選取中的業態 preset id（沒有選取或已手動調整過滑桿則不存在此 key）。
 
 「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）。
