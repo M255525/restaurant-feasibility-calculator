@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>餐飲店經營評估試算工具</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B2A44">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="餐飲試算">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -274,11 +281,17 @@ section.alt{background:#fff;}
 
 /* ---------- Footer ---------- */
 footer{background:var(--ink-navy);color:#AEC0D6;padding:32px 0;font-size:.78rem;}
-footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;}
-footer .reset-btn{
+footer .wrap{display:flex;flex-direction:column;gap:14px;}
+footer .disclaimer{max-width:62em;}
+footer .footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;}
+footer .footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:14px;}
+footer .footer-links a{color:#AEC0D6;text-decoration:underline;}
+footer .footer-links a:hover{color:#EDF2F8;}
+footer .reset-btn, footer .footer-link-btn{
   background:transparent;color:#EDF2F8;border:1px solid #3A4E6E;border-radius:999px;
   padding:8px 16px;cursor:pointer;font-family:var(--font-body);font-size:.78rem;
 }
+footer .reset-btn:hover, footer .footer-link-btn:hover{border-color:var(--brass-accent);}
 
 /* ---------- Accessibility / motion ---------- */
 :focus-visible{outline:3px solid var(--brass-accent);outline-offset:2px;}
@@ -287,9 +300,55 @@ footer .reset-btn{
   .pe-bar-marker{transition:none;}
   .ticket-row.flash{animation:none;}
 }
+
+/* ---------- Top marquee ---------- */
+#marqueeBar{position:fixed;top:0;left:0;right:0;height:30px;background:var(--ink-navy);border-bottom:1px solid #3A4E6E;z-index:2100;overflow:hidden;display:none;align-items:center;}
+#marqueeBar.show{display:flex;}
+#marqueeTrack{display:inline-block;white-space:nowrap;padding-left:100%;font-size:13px;font-weight:600;color:var(--brass-accent);animation:marquee-scroll 30s linear infinite;}
+body.has-marquee{padding-top:30px;}
+@keyframes marquee-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--ink-navy);color:#EDF2F8;padding:10px 18px;border-radius:999px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:3000;
+  max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;}
+
+/* ---------- PDF export / print ---------- */
+.print-only{display:none;}
+#pdfWatermark{display:none;}
+@media print{
+  #marqueeBar, .preset-lead, .preset-row, .group-tabs, .var-card input[type=range], .var-minmax,
+  .ai-prompt-block, .ai-settings, .ai-actions, footer .footer-links{
+    display:none !important;
+  }
+  .group-panel{display:block !important;margin-bottom:18px;}
+  .ai-card{display:none;}
+  .ai-card:has(.ai-result.show){display:block;}
+  .print-only{display:block;}
+  #pdfWatermark{
+    display:block;position:fixed;inset:0;pointer-events:none;z-index:9999;
+    background-repeat:repeat;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='340' height='220'><text x='-20' y='120' font-family='sans-serif' font-size='20' fill='rgba(27,42,68,0.14)' transform='rotate(-28 150 110)'>僅供試算參考・非正式財務報表</text></svg>");
+  }
+  body{background:#fff;}
+  section{padding:18px 0;}
+  .hero{background:#fff !important;color:var(--ink-black) !important;}
+  .eyebrow{color:#5A5850 !important;}
+  .hero .sub{color:#4C4A44 !important;}
+  .hero h1 .accent{color:var(--brass-accent) !important;}
+}
 </style>
 </head>
 <body>
+
+<div id="marqueeBar"><div id="marqueeTrack"></div></div>
+<div id="pdfWatermark"></div>
+<div id="toast"></div>
+<div class="print-only" id="printMeta"></div>
 
 <header class="hero">
   <div class="wrap">
@@ -409,8 +468,19 @@ footer .reset-btn{
 
 <footer>
   <div class="wrap">
-    <div>本工具僅供開店前的財務可行性初步評估，所有試算結果皆為估計值，實際經營請諮詢會計師／商圈實際行情。變數設定與 AI 診斷內容皆儲存在你的瀏覽器本機，不會上傳。</div>
-    <button class="reset-btn" id="resetBtn" type="button">重設為基準假設</button>
+    <div class="disclaimer">
+      <strong>使用警語：</strong>本工具僅供開店前的財務可行性初步評估，所有試算結果皆為估計值，不是正式財務報表或專業意見，不能取代會計師、財務顧問或商圈實地訪查。變數設定、AI 診斷內容與 API 金鑰皆只存在你的瀏覽器本機，不會上傳到任何伺服器；填入 API 金鑰並按下「請 AI 診斷」時，你的試算資料會直接送到你選擇的服務商官方 API。完整使用說明與創作者資料請見<a href="manual.html">操作手冊</a>。
+    </div>
+    <div class="footer-row">
+      <span>製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com" style="color:#AEC0D6;">tsaimark@gmail.com</a></span>
+      <span class="footer-links">
+        <img class="visitor-badge" src="https://visitor-badge.laobi.icu/badge?page_id=m255525.restaurantfeasibilitycalculator" alt="訪客次數" style="vertical-align:middle;height:20px;">
+        <a class="manual-link" href="manual.html">操作手冊 →</a>
+        <button type="button" id="pdfExportBtn" class="footer-link-btn">📄 匯出 PDF</button>
+        <button type="button" id="installBtn" class="footer-link-btn">📲 加入主畫面</button>
+        <button class="reset-btn" id="resetBtn" type="button">重設為基準假設</button>
+      </span>
+    </div>
   </div>
 </footer>
 
@@ -1092,6 +1162,135 @@ footer .reset-btn{
   $("aiDiagnoseBtn").addEventListener("click", runAiDiagnosis);
   $("ruleDiagnoseBtn").addEventListener("click", runRuleDiagnosis);
   $("resetBtn").addEventListener("click", resetToDefaults);
+  $("pdfExportBtn").addEventListener("click", function(){ window.print(); });
+  window.addEventListener("beforeprint", function(){
+    var now = new Date();
+    $("printMeta").textContent = "產生時間：" + now.toLocaleString("zh-TW") + "　｜　餐飲店經營評估試算工具（僅供試算參考，非正式財務報表）";
+  });
+})();
+</script>
+
+<script>
+/* ================= 頂部跑馬燈（獨立運作，跟上方主程式邏輯無關；共用工作區既有的公告 Google Sheet） ================= */
+(function () {
+  "use strict";
+  var MARQUEE_CHECK_URL = "https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec";
+  var STORAGE_KEY = "restaurantCalcMarquee";
+  var REFRESH_MS = 20 * 60 * 1000;
+
+  var bar = document.getElementById("marqueeBar");
+  var track = document.getElementById("marqueeTrack");
+  var lastKey = null;
+
+  function loadCache() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch (e) { return []; }
+  }
+  function saveCache(items) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+  }
+  function appendParsedText(container, text) {
+    var re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    var lastIndex = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > lastIndex) container.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      var a = document.createElement("a");
+      a.href = m[2];
+      a.textContent = m[1];
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.style.color = "inherit";
+      a.style.textDecoration = "underline";
+      container.appendChild(a);
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < text.length) container.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+  function buildTrackContent(items) {
+    var frag = document.createDocumentFragment();
+    function appendPass() {
+      items.forEach(function (item, idx) {
+        if (idx > 0) frag.appendChild(document.createTextNode("　★　"));
+        appendParsedText(frag, item);
+      });
+    }
+    appendPass();
+    frag.appendChild(document.createTextNode("　★　"));
+    appendPass();
+    return frag;
+  }
+  function render(items) {
+    if (!items || !items.length) return;
+    var key = JSON.stringify(items);
+    if (key === lastKey) return;
+    lastKey = key;
+    track.innerHTML = "";
+    track.appendChild(buildTrackContent(items));
+    bar.classList.add("show");
+    document.body.classList.add("has-marquee");
+    var width = track.scrollWidth / 2;
+    track.style.animationDuration = Math.max(width / 80, 10) + "s";
+  }
+  function fetchMarquee() {
+    fetch(MARQUEE_CHECK_URL, { method: "POST", body: JSON.stringify({ serial: "" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && Array.isArray(data.marquee) && data.marquee.length) {
+          saveCache(data.marquee);
+          render(data.marquee);
+        }
+      })
+      .catch(function () {});
+  }
+
+  render(loadCache());
+  fetchMarquee();
+  setInterval(fetchMarquee, REFRESH_MS);
+})();
+</script>
+
+<script>
+/* ================= PWA 加入主畫面（獨立運作，跟上方主程式邏輯無關） ================= */
+(function () {
+  "use strict";
+  var deferredPrompt = null;
+  var btn = document.getElementById("installBtn");
+  var ua = navigator.userAgent || "";
+  var isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var isMacDesktop = /Macintosh/.test(ua) && !isIOSDevice;
+  var isSafariEngine = /^((?!chrome|crios|fxios|edgios|android).)*safari/i.test(ua);
+  var isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+
+  function fallbackMessage() {
+    if (isIOSDevice) return "請點畫面上的「分享」圖示，選「加入主畫面」";
+    if (isMacDesktop && isSafariEngine) return "請用選單列「檔案」→「加入 Dock」（Safari 17 以上）";
+    return "目前瀏覽器不支援安裝，或已安裝過";
+  }
+
+  function notify(msg) {
+    var t = document.getElementById("toast");
+    if (!t) { window.alert(msg); return; }
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(notify._timer);
+    notify._timer = setTimeout(function () { t.classList.remove("show"); }, 2400);
+  }
+
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredPrompt = e; });
+  window.addEventListener("appinstalled", function () { deferredPrompt = null; });
+
+  if (btn) {
+    if (isStandalone) { btn.style.display = "none"; }
+    else {
+      btn.addEventListener("click", function () {
+        if (!deferredPrompt) { notify(fallbackMessage()); return; }
+        try { deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; }); }
+        catch (e) { notify(fallbackMessage()); }
+      });
+    }
+  }
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("service-worker.js").catch(function () {}); });
+  }
 })();
 </script>
 </body>

@@ -4,7 +4,9 @@
 
 ## 這是什麼
 
-**一般用途的財務可行性試算工具**，不是為特定某家餐廳寫的企劃書——文案（H1／說明文字）刻意用「你的餐飲店」通用第二人稱框架，數字全部是可調整的預設值起點，不是描述某一家真實店家（2026-08-21 依使用者回饋修正過一次，原本文案讀起來像在講一家特定店，已改掉）。以台北／新北一線商圈中高固定成本結構為情境（55 坪／月租 38.5 萬是起始基準值，非強制），把「坪數配置 → 座位數 → 營收 → 成本 → 淨利」整條推算鏈拆成可調整的變數，即時重算損益並依官方建議健康帶判色。**單檔前端，無後端，無序號授權**（精簡版範圍，未來如需 manual.html／PWA／跑馬燈／訪客計數器可再擴充，比照 `行銷內容工具/coffee-ig-planner` 等成熟姊妹專案）。
+**一般用途的財務可行性試算工具**，不是為特定某家餐廳寫的企劃書——文案（H1／說明文字）刻意用「你的餐飲店」通用第二人稱框架，數字全部是可調整的預設值起點，不是描述某一家真實店家（2026-08-21 依使用者回饋修正過一次，原本文案讀起來像在講一家特定店，已改掉）。以台北／新北一線商圈中高固定成本結構為情境（55 坪／月租 38.5 萬是起始基準值，非強制），把「坪數配置 → 座位數 → 營收 → 成本 → 淨利」整條推算鏈拆成可調整的變數，即時重算損益並依官方建議健康帶判色。**單檔前端，無後端，無序號授權。**
+
+2026-08-21 已從精簡版擴充到完整配置（比照 `行銷內容工具/coffee-ig-planner` 等成熟姊妹專案）：PDF 匯出（含浮水印）、頂部跑馬燈、`manual.html` 操作手冊、訪客計數器、PWA 加入主畫面，見下方各節。
 
 **六種餐飲業態快速範例**（`BUSINESS_PRESETS`，變數面板上方的藥丸按鈕列）：精緻鍋物／涮涮鍋、燒肉、日式定食／輕食便當、主題餐酒館、早午餐／咖啡輕食、熱炒／合菜。每個 preset 覆寫空間配置、定價翻桌、成本占比**與人事編制**（`kitchenFT`/`kitchenPTHours`/`floorFT`/`floorPTHours` 等）——**人事編制一定要跟著業態一起換**，否則低客單價業態（早午餐、熱炒）套用高客單價業態的人力規模，人事占比會爆掉、淨利率會出現不合理的深度負值（曾實測到 -52%，已修正）。目前的預設值刻意讓「熱炒／合菜」在 55坪／38.5萬租金這個情境下維持小幅負利潤（約 -3.7%，租金占比近 30%）——這是刻意保留的洞察（翻桌慢、客單價不夠高的業態撐不住這個租金檔次的一線商圈），不是計算錯誤，不要為了讓所有 preset 都轉正而反過來調整假設。
 
@@ -31,6 +33,29 @@
 - `restaurantCalcActivePreset` — 目前選取中的業態 preset id（沒有選取或已手動調整過滑桿則不存在此 key）。
 
 「重設為基準假設」按鈕清掉 `restaurantCalcState`／`restaurantCalcActivePreset` 並還原成 `VAR_DEFS` 裡的基準預設值（55坪／38.5萬租金／客單價700等，這組基準值不對應任何一個業態 preset，是中性起點）。
+
+## PDF 匯出（`#pdfExportBtn`）
+
+不依賴任何 PDF 函式庫，比照 `資料儀表板/Dashboard` 既有模式：按鈕呼叫 `window.print()`，實際排版全靠 `@media print` CSS 規則：
+
+- `.group-panel{display:block !important}` 讓五組變數分類全部展開（畫面上平常一次只顯示一組 active 分頁）。
+- 隱藏所有互動控制：滑桿本體（`.var-card input[type=range]`）、業態範例按鈕列、AI 設定／診斷角度／操作按鈕、頁尾整組 `.footer-links`（含 API 金鑰輸入框，基於安全考量絕不印出表單控制項本身）。
+- `.ai-card` 預設 `display:none`，只有 `:has(.ai-result.show)` 時才顯示——曾產生過 AI 診斷結果才會一併印出，沒產生過不會留下一個空區塊（`:has()` 需要 Chromium 105+／Safari 16.4+，工作區其餘專案也未特別支援更舊瀏覽器，此處比照辦理）。
+- `#pdfWatermark`（浮水印）：純 CSS，`position:fixed` 覆蓋整頁，`background-image` 用 inline SVG data URI 平鋪重複「僅供試算參考・非正式財務報表」字樣，`rgba(27,42,68,0.14)` 低透明度、`pointer-events:none`。只在 `@media print` 顯示，畫面上平常 `display:none`。跟 `IPA_Kano` 用真人照片圖片浮水印（課程授權情境）不同——這個工具沒有序號授權，浮水印純粹是「這是試算工具產出、不是正式財務報表」的免責聲明，用文字 SVG 就夠、不需要嵌圖片資產。
+- `#printMeta`（`.print-only`，平常 `display:none`）：`beforeprint` 事件觸發時才寫入「產生時間＋工具名稱」文字，顯示在報表最上方。
+
+## 頂部跑馬燈與 PWA 加入主畫面
+
+逐字比照 `行銷內容工具/coffee-ig-planner/index.html` 已驗證的實作（各自獨立 IIFE `<script>`，跟主程式邏輯無關）：
+
+- 跑馬燈：`MARQUEE_CHECK_URL` 是工作區多個工具共用的同一顆 Google Apps Script 端點，POST 空 `serial`，只取回傳的 `marquee` 陣列；localStorage key 為 `restaurantCalcMarquee`。本頁沒有 sticky topbar，`body.has-marquee{padding-top:30px}` 就夠。改跑馬燈內容直接編輯共用 Google Sheet，不需要重新部署 Apps Script。
+- PWA：`manifest.json`＋`service-worker.js`（network-first＋同源快取備援，`fetch(request,{cache:'reload'})` 這個細節必須保留）＋`icons/`（PIL＋`C:\Windows\Fonts\msjhbd.ttc` 產生，深藍色底 `#1B2A44`＋米白色單字「坪」，192／512／maskable-512／apple-touch-icon 四種尺寸；產生腳本未進 repo，比照姊妹專案慣例）。安裝按鈕 `#installBtn`＋獨立 `#toast` 元素＋逐字沿用已修好 bug 的安裝腳本（見 [[pwa-install-rollout]] 記載的兩個踩坑：腳本執行時機須晚於按鈕元素解析、`notify()` 自帶避免跨作用域抓不到 `showToast`）。
+
+## 操作手冊（manual.html）與訪客計數器
+
+`manual.html` 自成一頁、內嵌 `<style>`（配色沿用本頁 token，非深色主題）。內容：操作步驟／業態範例說明／AI 診斷角度說明／PDF 匯出說明／PWA 安裝說明／隱私說明／使用警語（財務工具版本，強調「試算結果為估計值、不是正式財務報表、不能取代會計師」）／創作者資料／授權限制。**創作者資料區塊逐字比照** `行銷內容工具/coffee-ig-planner/manual.html` 等姊妹專案，更新其中一邊時同步其餘各邊。`index.html` footer 有連結到 `manual.html`。
+
+訪客計數器：`visitor-badge.laobi.icu` 的 SVG badge，`page_id=m255525.restaurantfeasibilitycalculator`，免金鑰免後端，比照姊妹專案慣例，放在 footer。
 
 ## 指令
 
