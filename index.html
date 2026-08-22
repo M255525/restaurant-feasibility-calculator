@@ -82,6 +82,7 @@ img,svg{max-width:100%;}
   gap:24px;
 }
 @media (max-width:820px){.hero-grid{grid-template-columns:1fr;}}
+.stat-col{display:flex;flex-direction:column;gap:24px;}
 
 .card{
   background:#fff;
@@ -415,16 +416,24 @@ body.has-marquee{padding-top:30px;}
         <div class="fp-seats">內用座位數 → <b id="seatCountOut">40</b> 席</div>
         <p class="fp-formula" id="fpFormula"></p>
       </div>
-      <div class="pe-card">
-        <h2>坪效（每坪月營收）</h2>
-        <p class="pe-caption">全店月營收 ÷ 總坪數。這是判斷你設定的店租撐不撐得起這個空間的核心指標。</p>
-        <div><span class="pe-value" id="peValue">0</span><span class="pe-unit">元 / 坪 / 月</span></div>
-        <div class="pe-bar-track">
-          <div class="pe-bar-band" id="peBand"></div>
-          <div class="pe-bar-marker" id="peMarker"></div>
+      <div class="stat-col">
+        <div class="pe-card">
+          <h2>坪效（每坪月營收）</h2>
+          <p class="pe-caption">全店月營收 ÷ 總坪數。這是判斷你設定的店租撐不撐得起這個空間的核心指標。</p>
+          <div><span class="pe-value" id="peValue">0</span><span class="pe-unit">元 / 坪 / 月</span></div>
+          <div class="pe-bar-track">
+            <div class="pe-bar-band" id="peBand"></div>
+            <div class="pe-bar-marker" id="peMarker"></div>
+          </div>
+          <div class="pe-bar-labels"><span>0</span><span id="peBandLabel">健康區間</span><span id="peMax">120,000</span></div>
+          <p class="pe-note">健康區間＝月租金的 7–8 倍營收目標 ÷ 總坪數，落在區間內代表坪效撐得起這個店租。</p>
         </div>
-        <div class="pe-bar-labels"><span>0</span><span id="peBandLabel">健康區間</span><span id="peMax">120,000</span></div>
-        <p class="pe-note">健康區間＝月租金的 7–8 倍營收目標 ÷ 總坪數，落在區間內代表坪效撐得起這個店租。</p>
+        <div class="pe-card cust-card">
+          <h2>每月顧客人次（內用）</h2>
+          <p class="pe-caption">座位數 ×（平日翻桌次數 × 平日營業天數 ＋ 假日翻桌次數 × 假日營業天數）。這是內用來客量的估計值，外帶／外送不計入人次，只反映在營收占比上。</p>
+          <div><span class="pe-value" id="custValue">0</span><span class="pe-unit">人次 / 月</span></div>
+          <p class="pe-note" id="custNote">平均每日約 0 人次。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -971,6 +980,10 @@ body.has-marquee{padding-top:30px;}
     var totalRevenue = dineInRevenue * (1 + takeoutFrac);
     if(totalRevenue <= 0) totalRevenue = 0.0001;
 
+    var monthlyCustomers = seatCount * (s.weekdayTurns * s.weekdayDays + s.weekendTurns * s.weekendDays);
+    var dineInDays = s.weekdayDays + s.weekendDays;
+    var avgDailyCustomers = dineInDays > 0 ? monthlyCustomers / dineInDays : 0;
+
     var rentRatio = s.monthlyRent / totalRevenue;
     var cogsAmount = totalRevenue * (s.cogsPct/100);
     var laborAmount = (s.kitchenFT*s.kitchenFTWage + s.kitchenPTHours*s.kitchenPTWage
@@ -995,7 +1008,8 @@ body.has-marquee{padding-top:30px;}
       marketingAmount:marketingAmount, marketingRatio:s.marketingPct/100,
       monthlyDepreciation:monthlyDepreciation,
       netProfit:netProfit, profitMargin:profitMargin,
-      pingEfficiency:pingEfficiency, depositAmount:depositAmount
+      pingEfficiency:pingEfficiency, depositAmount:depositAmount,
+      monthlyCustomers:monthlyCustomers, avgDailyCustomers:avgDailyCustomers
     };
   }
 
@@ -1069,6 +1083,12 @@ body.has-marquee{padding-top:30px;}
     $("peMax").textContent = fmtInt(axisMax);
   }
 
+  /* ---------- Customer count headline ---------- */
+  function renderCustomerCount(res){
+    tweenNumber($("custValue"), res.monthlyCustomers, function(n){ return fmtInt(n); });
+    $("custNote").textContent = "平均每日約 " + fmtInt(res.avgDailyCustomers) + " 人次（內用）。";
+  }
+
   /* ---------- Notes ---------- */
   var NOTE_DEFS = [
     {title:"CAPEX 初期資本", body:function(res){ return "以每坪 " + fmtInt(state.renovationPerPing) + " 元裝潢造價估算，總建置成本約 $" + fmtInt(state.totalPing*state.renovationPerPing) + "，每月攤提折舊約 $" + fmtInt(res.monthlyDepreciation) + "。"; }},
@@ -1094,6 +1114,7 @@ body.has-marquee{padding-top:30px;}
     var res = calculate();
     renderFloorPlan(res);
     renderPingEfficiency(res);
+    renderCustomerCount(res);
     renderTicket(res);
     renderNotes(res);
     firstRender = false;
@@ -1351,6 +1372,9 @@ body.has-marquee{padding-top:30px;}
     html += '<div class="pr-section"><h2>空間配置</h2><p>' + Math.round(state.totalPing) + ' 坪 × (100% − '
       + state.kitchenPct + '% − ' + state.circPct + '%) = ' + res.effectivePing.toFixed(1) + ' 坪內用 ÷ '
       + state.pingPerSeat.toFixed(2) + ' 坪/席 ≈ ' + res.seatCount + ' 席</p></div>';
+
+    html += '<div class="pr-section"><h2>每月顧客人次（內用）</h2><p>約 ' + fmtInt(res.monthlyCustomers)
+      + ' 人次 / 月，平均每日約 ' + fmtInt(res.avgDailyCustomers) + ' 人次（外帶／外送不計入人次）。</p></div>';
 
     GROUPS.forEach(function(g){
       var rows = VAR_DEFS.filter(function(v){ return v.group === g.id; }).map(function(v){
